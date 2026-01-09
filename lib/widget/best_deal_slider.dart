@@ -150,12 +150,12 @@ class BestDealSlider extends ConsumerWidget {
 
     // Calculate height based on card content for consistent sizing
     final cardHeight = 160.h + // Image height
-        24.h + // Top and bottom padding
-        20.h + // Name text
-        16.h + // Overview text
-        20.h + // Price text
-        40.h + // Button height
-        28.h; // Spacing between elements
+        24.h +
+        20.h +
+        16.h +
+        20.h +
+        40.h +
+        28.h;
 
     return dealsAsync.when(
       loading: () => SizedBox(
@@ -210,6 +210,12 @@ class BestDealSlider extends ConsumerWidget {
           );
         }
 
+        // Find the item with the highest discount
+        final topDiscountItem = deals.reduce((a, b) => 
+          a.discount > b.discount ? a : b
+        );
+        final maxDiscount = topDiscountItem.discount;
+
         return SizedBox(
           height: cardHeight,
           child: ListView.separated(
@@ -223,19 +229,40 @@ class BestDealSlider extends ConsumerWidget {
               final discountedPrice = hasDiscount
                   ? _discountedPrice(item.price, item.discount)
                   : item.price;
+              final isTopDiscount = item.discount == maxDiscount && maxDiscount > 0;
 
               return Container(
                 width: 240.w,
                 decoration: BoxDecoration(
                   color: AppColors.background,
                   borderRadius: BorderRadius.circular(16.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  border: isTopDiscount
+                      ? Border.all(
+                          color: AppColors.accent,
+                          width: 2.5,
+                        )
+                      : null,
+                  boxShadow: isTopDiscount
+                      ? [
+                          BoxShadow(
+                            color: AppColors.accent.withOpacity(0.3),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                            spreadRadius: 2,
+                          ),
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,6 +270,7 @@ class BestDealSlider extends ConsumerWidget {
                   children: [
                     /// IMAGE + BADGE
                     Stack(
+                      clipBehavior: Clip.none,
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.vertical(
@@ -313,6 +341,57 @@ class BestDealSlider extends ConsumerWidget {
                                   ),
                                 ),
                         ),
+                        // Top Discount Badge
+                        if (isTopDiscount)
+                          Positioned(
+                            top: 8.h,
+                            left: 8.w,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 10.w,
+                                vertical: 6.h,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppColors.accent,
+                                    AppColors.accentLight,
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(20.r),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.accent.withOpacity(0.5),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.local_fire_department_rounded,
+                                    size: 14.sp,
+                                    color: Colors.white,
+                                  ),
+                                  SizedBox(width: 4.w),
+                                  Text(
+                                    'TOP DISCOUNT',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 9.sp,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        // Discount Percentage Badge
                         if (hasDiscount)
                           AnimatedPercentageBadge(
                             discount: item.discount,
@@ -335,6 +414,9 @@ class BestDealSlider extends ConsumerWidget {
                             style: GoogleFonts.poppins(
                               fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
+                              color: isTopDiscount
+                                  ? AppColors.accent
+                                  : AppColors.textPrimary,
                             ),
                           ),
                           SizedBox(height: 6.h),
@@ -357,7 +439,9 @@ class BestDealSlider extends ConsumerWidget {
                                 style: GoogleFonts.poppins(
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.accent,
+                                  color: isTopDiscount
+                                      ? AppColors.accent
+                                      : AppColors.accent,
                                 ),
                               ),
                               if (hasDiscount) ...[
@@ -367,8 +451,7 @@ class BestDealSlider extends ConsumerWidget {
                                   style: GoogleFonts.poppins(
                                     fontSize: 12.sp,
                                     color: Colors.grey,
-                                    decoration:
-                                    TextDecoration.lineThrough,
+                                    decoration: TextDecoration.lineThrough,
                                   ),
                                 ),
                               ],
@@ -378,9 +461,26 @@ class BestDealSlider extends ConsumerWidget {
                           SizedBox(height: 12.h),
                           SizedBox(
                             width: double.infinity,
-                            child: OutlinedButton(
+                            child: ElevatedButton(
                               onPressed: () {},
-                              child: const Text("View Details"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isTopDiscount
+                                    ? AppColors.accent
+                                    : AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.symmetric(vertical: 12.h),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.r),
+                                ),
+                                elevation: isTopDiscount ? 4 : 2,
+                              ),
+                              child: Text(
+                                "View Details",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ),
                         ],

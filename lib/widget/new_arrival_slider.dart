@@ -86,8 +86,8 @@ class NewArrivalSlider extends ConsumerWidget {
             20.h + // Name text
             16.h + // Overview text
             20.h + // Price text
-            40.h + // Button height
-            28.h; // Spacing between elements
+            44.h + // Button height with padding
+            30.h; // Spacing between elements
 
         return SizedBox(
           height: calculatedHeight,
@@ -115,6 +115,7 @@ class NewArrivalSlider extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Image Section
                     GestureDetector(
                       onTap: () => _goToDetail(context, item),
                       child: ClipRRect(
@@ -144,6 +145,7 @@ class NewArrivalSlider extends ConsumerWidget {
                                   color: AppColors.backgroundDark,
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
                                         Icons.image_not_supported_outlined,
@@ -168,6 +170,7 @@ class NewArrivalSlider extends ConsumerWidget {
                                 color: AppColors.backgroundDark,
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
                                       Icons.image_outlined,
@@ -187,26 +190,33 @@ class NewArrivalSlider extends ConsumerWidget {
                               ),
                       ),
                     ),
+                    // Details Section
                     Padding(
                       padding: EdgeInsets.all(12.w),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             item.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.poppins(
-                                fontSize: 14.sp, fontWeight: FontWeight.w600),
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                          SizedBox(height: 6.h),
+                          SizedBox(height: 4.h),
                           Text(
-                            item.overview!!,
+                            item.overview ?? '',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.poppins(fontSize: 12.sp),
+                            style: GoogleFonts.poppins(
+                              fontSize: 12.sp,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
-                          SizedBox(height: 8.h),
+                          SizedBox(height: 6.h),
                           Text(
                             "₹${NumberFormat('#,###').format(item.price)}",
                             style: GoogleFonts.poppins(
@@ -215,12 +225,24 @@ class NewArrivalSlider extends ConsumerWidget {
                               color: AppColors.accent,
                             ),
                           ),
-                          SizedBox(height: 10.h),
+                          SizedBox(height: 8.h),
                           SizedBox(
                             width: double.infinity,
+                            height: 36.h,
                             child: OutlinedButton(
-                              onPressed: () => {},
-                              child: const Text("View Details"),
+                              onPressed: () => _goToDetail(context, item),
+                              style: OutlinedButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text(
+                                "View Details",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ),
                         ],

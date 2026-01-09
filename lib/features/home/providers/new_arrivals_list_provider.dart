@@ -11,21 +11,52 @@ final sortOptions = ['Newest First', 'Price: Low to High', 'Price: High to Low',
 
 
 
+/// Firebase provider to get all new arrivals products
+/// Uses StreamProvider for real-time updates
 final newArrivalsFirebaseProvider =
-FutureProvider<List<NewArrivalModel>>((ref) async {
+    StreamProvider<List<NewArrivalModel>>((ref) {
   final refDb = FirebaseDatabase.instance.ref('new_arrivals');
 
-  final snapshot = await refDb.get();
-  if (!snapshot.exists) return [];
+  return refDb.onValue.map((event) {
+    final snapshot = event.snapshot;
+    
+    // If snapshot doesn't exist, return empty list
+    if (!snapshot.exists || snapshot.value == null) {
+      return <NewArrivalModel>[];
+    }
 
-  final data = snapshot.value as Map<dynamic, dynamic>;
+    final data = snapshot.value;
+    
+    // Handle different data types
+    if (data is! Map) {
+      return <NewArrivalModel>[];
+    }
 
-  return data.entries.map((e) {
-    return NewArrivalModel.fromMap(
-      e.key.toString(),
-      Map<dynamic, dynamic>.from(e.value),
-    );
-  }).toList();
+    final Map<dynamic, dynamic> dataMap = data as Map<dynamic, dynamic>;
+    
+    // Parse all products from Firebase
+    final List<NewArrivalModel> products = [];
+    
+    dataMap.forEach((key, value) {
+      try {
+        if (value is Map) {
+          final product = NewArrivalModel.fromMap(
+            key.toString(),
+            Map<dynamic, dynamic>.from(value),
+          );
+          // Only include active products
+          if (product.isActive) {
+            products.add(product);
+          }
+        }
+      } catch (e) {
+        // Skip invalid products and continue
+        print('Error parsing product $key: $e');
+      }
+    });
+
+    return products;
+  });
 });
 
 class FilterState {
@@ -40,8 +71,8 @@ class FilterState {
   FilterState({
     this.searchQuery = '',
     Set<String>? selectedBrands,
-    this.minPrice = 200,
-    this.maxPrice = 1000,
+    this.minPrice = 0,
+    this.maxPrice = 200000,
     Set<String>? selectedRAM,
     Set<String>? selectedSSD,
     this.sortBy = 'Newest First',
@@ -74,10 +105,18 @@ class NewArrivalsListNotifier extends StateNotifier<FilterState> {
 
   NewArrivalsListNotifier(this.ref) : super(FilterState());
 
+  /// Get all products from Firebase
+  /// Returns empty list if loading or error
   List<NewArrivalModel> get allProducts {
-    return ref.watch(newArrivalsFirebaseProvider).maybeWhen(
+    final asyncValue = ref.watch(newArrivalsFirebaseProvider);
+    
+    return asyncValue.when(
       data: (list) => list,
-      orElse: () => [],
+      loading: () => [],
+      error: (error, stack) {
+        print('Error fetching new arrivals: $error');
+        return [];
+      },
     );
   }
 
@@ -115,39 +154,60 @@ class NewArrivalsListNotifier extends StateNotifier<FilterState> {
     state = FilterState();
   }
 
+  /// Get filtered and sorted products
+  /// Applies all active filters and sorting
   List<NewArrivalModel> get filteredProducts {
+    // Start with all products
     var products = List<NewArrivalModel>.from(allProducts);
 
+    // Apply search filter
     if (state.searchQuery.isNotEmpty) {
-      final q = state.searchQuery.toLowerCase();
+      final q = state.searchQuery.toLowerCase().trim();
       products = products.where((p) {
         return p.name.toLowerCase().contains(q) ||
             p.model.toLowerCase().contains(q) ||
-            p.overview.toLowerCase().contains(q);
+            p.overview.toLowerCase().contains(q) ||
+            p.processor.toLowerCase().contains(q);
       }).toList();
     }
 
+    // Apply brand filter (checking both model and name)
     if (state.selectedBrands.isNotEmpty) {
-      products =
-          products.where((p) => state.selectedBrands.contains(p.model)).toList();
+      products = products.where((p) {
+        final productBrand = p.model.toLowerCase();
+        final productName = p.name.toLowerCase();
+        return state.selectedBrands.any((brand) {
+          final brandLower = brand.toLowerCase();
+          return productBrand.contains(brandLower) ||
+              productName.contains(brandLower);
+        });
+      }).toList();
     }
 
+    // Apply price range filter
     products = products
         .where((p) => p.price >= state.minPrice && p.price <= state.maxPrice)
         .toList();
 
+    // Apply RAM filter
     if (state.selectedRAM.isNotEmpty) {
       products = products.where((p) {
-        return state.selectedRAM.any((ram) => p.ram.contains(ram));
+        return state.selectedRAM.any((ram) => 
+          p.ram.toLowerCase().contains(ram.toLowerCase())
+        );
       }).toList();
     }
 
+    // Apply storage filter
     if (state.selectedSSD.isNotEmpty) {
       products = products.where((p) {
-        return state.selectedSSD.any((ssd) => p.storage.contains(ssd));
+        return state.selectedSSD.any((ssd) => 
+          p.storage.toLowerCase().contains(ssd.toLowerCase())
+        );
       }).toList();
     }
 
+    // Apply sorting
     switch (state.sortBy) {
       case 'Price: Low to High':
         products.sort((a, b) => a.price.compareTo(b.price));
@@ -161,7 +221,9 @@ class NewArrivalsListNotifier extends StateNotifier<FilterState> {
       case 'Name: Z-A':
         products.sort((a, b) => b.name.compareTo(a.name));
         break;
+      case 'Newest First':
       default:
+        // Keep original order (newest first based on Firebase order)
         break;
     }
 
