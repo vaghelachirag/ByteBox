@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "685282199422",
+    "project_id": "bytebox-96b6a",
+    "storage_bucket": "bytebox-96b6a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:685282199422:android:7c98b792c1948b2b5cd52f",
+        "android_client_info": {
+          "package_name": "com.example.bytebox"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhd7mLY58F78UQmObL_G2zpbLNPiPXDCA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,7 +1,33 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'home_provider.dart';
+import 'package:firebase_database/firebase_database.dart';
 
-// Filter State Model
+import '../../../model/NewArrivalModel.dart';
+
+// Available filter options
+final availableBrands = ['Dell', 'HP', 'Lenovo', 'Apple', 'Acer', 'Microsoft'];
+final availableRAM = ['8GB', '16GB', '32GB'];
+final availableSSD = ['256GB', '512GB', '1TB'];
+final sortOptions = ['Newest First', 'Price: Low to High', 'Price: High to Low', 'Name: A-Z', 'Name: Z-A'];
+
+
+
+final newArrivalsFirebaseProvider =
+FutureProvider<List<NewArrivalModel>>((ref) async {
+  final refDb = FirebaseDatabase.instance.ref('new_arrivals');
+
+  final snapshot = await refDb.get();
+  if (!snapshot.exists) return [];
+
+  final data = snapshot.value as Map<dynamic, dynamic>;
+
+  return data.entries.map((e) {
+    return NewArrivalModel.fromMap(
+      e.key.toString(),
+      Map<dynamic, dynamic>.from(e.value),
+    );
+  }).toList();
+});
+
 class FilterState {
   final String searchQuery;
   final Set<String> selectedBrands;
@@ -42,40 +68,27 @@ class FilterState {
       sortBy: sortBy ?? this.sortBy,
     );
   }
-
-  bool get hasActiveFilters {
-    return selectedBrands.isNotEmpty ||
-        selectedRAM.isNotEmpty ||
-        selectedSSD.isNotEmpty ||
-        minPrice != 200 ||
-        maxPrice != 1000;
-  }
 }
-
-// Available filter options
-final availableBrands = ['Dell', 'HP', 'Lenovo', 'Apple', 'Acer', 'Microsoft'];
-final availableRAM = ['8GB', '16GB', '32GB'];
-final availableSSD = ['256GB', '512GB', '1TB'];
-final sortOptions = ['Newest First', 'Price: Low to High', 'Price: High to Low', 'Name: A-Z', 'Name: Z-A'];
-
-// List Page Provider
 class NewArrivalsListNotifier extends StateNotifier<FilterState> {
-  final List<ProductModel> allProducts;
+  final Ref ref;
 
-  NewArrivalsListNotifier(this.allProducts) : super(FilterState());
+  NewArrivalsListNotifier(this.ref) : super(FilterState());
+
+  List<NewArrivalModel> get allProducts {
+    return ref.watch(newArrivalsFirebaseProvider).maybeWhen(
+      data: (list) => list,
+      orElse: () => [],
+    );
+  }
 
   void updateSearchQuery(String query) {
     state = state.copyWith(searchQuery: query);
   }
 
   void toggleBrand(String brand) {
-    final newBrands = Set<String>.from(state.selectedBrands);
-    if (newBrands.contains(brand)) {
-      newBrands.remove(brand);
-    } else {
-      newBrands.add(brand);
-    }
-    state = state.copyWith(selectedBrands: newBrands);
+    final brands = Set<String>.from(state.selectedBrands);
+    brands.contains(brand) ? brands.remove(brand) : brands.add(brand);
+    state = state.copyWith(selectedBrands: brands);
   }
 
   void updatePriceRange(double min, double max) {
@@ -83,23 +96,15 @@ class NewArrivalsListNotifier extends StateNotifier<FilterState> {
   }
 
   void toggleRAM(String ram) {
-    final newRAM = Set<String>.from(state.selectedRAM);
-    if (newRAM.contains(ram)) {
-      newRAM.remove(ram);
-    } else {
-      newRAM.add(ram);
-    }
-    state = state.copyWith(selectedRAM: newRAM);
+    final rams = Set<String>.from(state.selectedRAM);
+    rams.contains(ram) ? rams.remove(ram) : rams.add(ram);
+    state = state.copyWith(selectedRAM: rams);
   }
 
   void toggleSSD(String ssd) {
-    final newSSD = Set<String>.from(state.selectedSSD);
-    if (newSSD.contains(ssd)) {
-      newSSD.remove(ssd);
-    } else {
-      newSSD.add(ssd);
-    }
-    state = state.copyWith(selectedSSD: newSSD);
+    final ssds = Set<String>.from(state.selectedSSD);
+    ssds.contains(ssd) ? ssds.remove(ssd) : ssds.add(ssd);
+    state = state.copyWith(selectedSSD: ssds);
   }
 
   void setSortBy(String sortBy) {
@@ -110,47 +115,39 @@ class NewArrivalsListNotifier extends StateNotifier<FilterState> {
     state = FilterState();
   }
 
-  List<ProductModel> get filteredProducts {
-    var products = List<ProductModel>.from(allProducts);
+  List<NewArrivalModel> get filteredProducts {
+    var products = List<NewArrivalModel>.from(allProducts);
 
-    // Filter by search query
     if (state.searchQuery.isNotEmpty) {
+      final q = state.searchQuery.toLowerCase();
       products = products.where((p) {
-        return p.name.toLowerCase().contains(state.searchQuery.toLowerCase()) ||
-            p.description.toLowerCase().contains(state.searchQuery.toLowerCase()) ||
-            p.brand.toLowerCase().contains(state.searchQuery.toLowerCase()) ||
-            (p.specifications != null &&
-                p.specifications!.toLowerCase().contains(state.searchQuery.toLowerCase()));
+        return p.name.toLowerCase().contains(q) ||
+            p.model.toLowerCase().contains(q) ||
+            p.overview.toLowerCase().contains(q);
       }).toList();
     }
 
-    // Filter by brands
     if (state.selectedBrands.isNotEmpty) {
-      products = products.where((p) => state.selectedBrands.contains(p.brand)).toList();
+      products =
+          products.where((p) => state.selectedBrands.contains(p.model)).toList();
     }
 
-    // Filter by price range
     products = products
         .where((p) => p.price >= state.minPrice && p.price <= state.maxPrice)
         .toList();
 
-    // Filter by RAM
     if (state.selectedRAM.isNotEmpty) {
       products = products.where((p) {
-        if (p.specifications == null) return false;
-        return state.selectedRAM.any((ram) => p.specifications!.contains(ram));
+        return state.selectedRAM.any((ram) => p.ram.contains(ram));
       }).toList();
     }
 
-    // Filter by SSD
     if (state.selectedSSD.isNotEmpty) {
       products = products.where((p) {
-        if (p.specifications == null) return false;
-        return state.selectedSSD.any((ssd) => p.specifications!.contains(ssd));
+        return state.selectedSSD.any((ssd) => p.storage.contains(ssd));
       }).toList();
     }
 
-    // Sort products
     switch (state.sortBy) {
       case 'Price: Low to High':
         products.sort((a, b) => a.price.compareTo(b.price));
@@ -164,21 +161,14 @@ class NewArrivalsListNotifier extends StateNotifier<FilterState> {
       case 'Name: Z-A':
         products.sort((a, b) => b.name.compareTo(a.name));
         break;
-      case 'Newest First':
       default:
-        // Keep original order (newest first by default)
         break;
     }
 
     return products;
   }
 }
-
-// Provider
 final newArrivalsListProvider =
-    StateNotifierProvider<NewArrivalsListNotifier, FilterState>((ref) {
-  final homeNotifier = ref.read(homeProvider.notifier);
-  final newArrivals = homeNotifier.newArrivals;
-  return NewArrivalsListNotifier(newArrivals);
+StateNotifierProvider<NewArrivalsListNotifier, FilterState>((ref) {
+  return NewArrivalsListNotifier(ref);
 });
-

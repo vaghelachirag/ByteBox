@@ -2,17 +2,431 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../providers/home_provider.dart';
-import '../providers/product_detail_provider.dart';
+import '../../../model/NewArrivalModel.dart';
 
+/// ---------------- FULL SCREEN IMAGE VIEWER ----------------
+class FullScreenImageViewer extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
 
-class ProductDetailPage extends ConsumerStatefulWidget {
-  final ProductModel product;
+  const FullScreenImageViewer({
+    super.key,
+    required this.images,
+    this.initialIndex = 0,
+  });
+
+  @override
+  State<FullScreenImageViewer> createState() => _FullScreenImageViewerState();
+}
+
+class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+  final TransformationController _transformationController =
+  TransformationController();
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _transformationController.dispose();
+    super.dispose();
+  }
+
+  void _resetZoom() {
+    _transformationController.value = Matrix4.identity();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.zoom_out_map, color: Colors.white),
+            onPressed: _resetZoom,
+            tooltip: 'Reset Zoom',
+          ),
+        ],
+      ),
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: widget.images.length,
+        onPageChanged: (index) {
+          setState(() {
+            _currentIndex = index;
+            _resetZoom();
+          });
+        },
+        itemBuilder: (context, index) {
+          return Center(
+            child: InteractiveViewer(
+              transformationController: _transformationController,
+              minScale: 0.5,
+              maxScale: 4.0,
+              child: Image.network(
+                widget.images[index],
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.image,
+                  size: 80,
+                  color: Colors.white54,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+      bottomNavigationBar: widget.images.length > 1
+          ? Container(
+        padding: EdgeInsets.symmetric(vertical: 20.h),
+        color: Colors.black87,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            widget.images.length,
+                (index) => Container(
+              margin: EdgeInsets.symmetric(horizontal: 4.w),
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: index == _currentIndex
+                    ? Colors.white
+                    : Colors.white54,
+              ),
+            ),
+          ),
+        ),
+      )
+          : null,
+    );
+  }
+}
+
+/// ---------------- REVIEW MODEL ----------------
+class ReviewModel {
+  final String id;
+  final String customerName;
+  final double rating;
+  final String comment;
+  final DateTime date;
+  final bool verified;
+
+  ReviewModel({
+    required this.id,
+    required this.customerName,
+    required this.rating,
+    required this.comment,
+    required this.date,
+    this.verified = false,
+  });
+}
+
+/// ---------------- DUMMY REVIEWS DATA ----------------
+final List<ReviewModel> _dummyReviews = [
+  ReviewModel(
+    id: '1',
+    customerName: 'John Smith',
+    rating: 5.0,
+    comment: 'Excellent laptop! Fast performance and great build quality. The display is crisp and the battery life is amazing. Highly recommended!',
+    date: DateTime.now().subtract(const Duration(days: 5)),
+    verified: true,
+  ),
+  ReviewModel(
+    id: '2',
+    customerName: 'Sarah Johnson',
+    rating: 4.5,
+    comment: 'Very satisfied with my purchase. The laptop works perfectly for my work needs. Only minor issue is the keyboard could be slightly better.',
+    date: DateTime.now().subtract(const Duration(days: 12)),
+    verified: true,
+  ),
+  ReviewModel(
+    id: '3',
+    customerName: 'Michael Chen',
+    rating: 5.0,
+    comment: 'Great value for money! Refurbished but looks brand new. Shipping was fast and packaging was excellent.',
+    date: DateTime.now().subtract(const Duration(days: 18)),
+    verified: false,
+  ),
+  ReviewModel(
+    id: '4',
+    customerName: 'Emily Davis',
+    rating: 4.0,
+    comment: 'Good laptop overall. Performance is solid for the price. The only downside is the storage could be larger.',
+    date: DateTime.now().subtract(const Duration(days: 25)),
+    verified: true,
+  ),
+  ReviewModel(
+    id: '5',
+    customerName: 'David Wilson',
+    rating: 5.0,
+    comment: 'Perfect condition! Runs all my software smoothly. The warranty included gives me peace of mind. Great customer service too!',
+    date: DateTime.now().subtract(const Duration(days: 30)),
+    verified: true,
+  ),
+];
+
+/// ---------------- REVIEW CARD WIDGET ----------------
+class _ReviewCard extends StatelessWidget {
+  final ReviewModel review;
+
+  const _ReviewCard({required this.review});
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      return 'Today';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else if (difference.inDays < 30) {
+      final weeks = (difference.inDays / 7).floor();
+      return '$weeks ${weeks == 1 ? 'week' : 'weeks'} ago';
+    } else {
+      final months = (difference.inDays / 30).floor();
+      return '$months ${months == 1 ? 'month' : 'months'} ago';
+    }
+  }
+
+  Widget _buildStars(double rating) {
+    return Row(
+      children: List.generate(5, (index) {
+        return Icon(
+          index < rating.floor()
+              ? Icons.star
+              : (index < rating ? Icons.star_half : Icons.star_border),
+          size: 16.sp,
+          color: Colors.amber,
+        );
+      }),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 16.h),
+      padding: EdgeInsets.all(18.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48.w,
+                height: 48.w,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    review.customerName[0].toUpperCase(),
+                    style: GoogleFonts.poppins(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          review.customerName,
+                          style: GoogleFonts.poppins(
+                            fontSize: 15.sp,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[900],
+                          ),
+                        ),
+                        if (review.verified) ...[
+                          SizedBox(width: 6.w),
+                          Container(
+                            padding: EdgeInsets.all(2.w),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[50],
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.verified,
+                              size: 14.sp,
+                              color: Colors.blue[700],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    SizedBox(height: 6.h),
+                    _buildStars(review.rating),
+                  ],
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Text(
+                  _formatDate(review.date),
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.sp,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          Text(
+            review.comment,
+            style: GoogleFonts.poppins(
+              fontSize: 14.sp,
+              color: Colors.grey[800],
+              height: 1.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ---------------- SPECIFICATION HELPER CLASSES ----------------
+class _SpecItem {
+  final String label;
+  final String value;
+
+  _SpecItem({required this.label, required this.value});
+}
+
+class _SpecRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _SpecRow({
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 130.w,
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[900],
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: GoogleFonts.poppins(
+                fontSize: 14.sp,
+                color: Colors.grey[700],
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ---------------- STATE ----------------
+class ProductDetailState {
+  final int selectedImageIndex;
+
+  ProductDetailState({this.selectedImageIndex = 0});
+
+  ProductDetailState copyWith({int? selectedImageIndex}) {
+    return ProductDetailState(
+      selectedImageIndex:
+      selectedImageIndex ?? this.selectedImageIndex,
+    );
+  }
+}
+
+/// ---------------- NOTIFIER ----------------
+class ProductDetailNotifier
+    extends StateNotifier<ProductDetailState> {
+  ProductDetailNotifier() : super(ProductDetailState());
+
+  void selectImage(int index) {
+    state = state.copyWith(selectedImageIndex: index);
+  }
+
+  void nextImage(int total) {
+    if (state.selectedImageIndex < total - 1) {
+      state = state.copyWith(
+          selectedImageIndex: state.selectedImageIndex + 1);
+    }
+  }
+
+  void previousImage() {
+    if (state.selectedImageIndex > 0) {
+      state = state.copyWith(
+          selectedImageIndex: state.selectedImageIndex - 1);
+    }
+  }
+}
+
+final productDetailProvider =
+StateNotifierProvider<ProductDetailNotifier, ProductDetailState>(
+        (ref) => ProductDetailNotifier());
+
+/// ---------------- PAGE ----------------
+class ProductDetailPage extends ConsumerWidget {
+  final NewArrivalModel product;
 
   const ProductDetailPage({
     super.key,
@@ -20,646 +434,673 @@ class ProductDetailPage extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ProductDetailPage> createState() =>
-      _ProductDetailPageState();
-}
-
-class _ProductDetailPageState
-    extends ConsumerState<ProductDetailPage> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref
-          .read(productDetailProvider.notifier)
-          .setProduct(widget.product);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(productDetailProvider);
     final notifier = ref.read(productDetailProvider.notifier);
-    final product = state.product ?? widget.product;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(child: _buildHeader(context)),
-            SliverToBoxAdapter(child: _buildBreadcrumbs(product)),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(20.w),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final isMobile =
-                        constraints.maxWidth < 768;
-
-                    return isMobile
-                        ? Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                      children: [
-                        _buildImageGallery(
-                            product, state, notifier),
-                        SizedBox(height: 24.h),
-                        _buildProductDetails(product),
-                      ],
-                    )
-                        : Row(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: _buildImageGallery(
-                              product, state, notifier),
-                        ),
-                        SizedBox(width: 40.w),
-                        Expanded(
-                          child:
-                          _buildProductDetails(product),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: _buildTabsSection(context, product, state, notifier),
-            ),
-            SliverToBoxAdapter(child: SizedBox(height: 40.h)),
+      backgroundColor: Colors.grey[50],
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        title: Text(
+          product.name,
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 16.sp,
+          ),
+        ),
+        iconTheme: IconThemeData(color: Colors.grey[800]),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _imageGallery(context, product, state, notifier),
+            _productInfo(product),
+            _tabs(context, product),
+            SizedBox(height: 20.h),
           ],
         ),
       ),
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // HEADER
-  // ---------------------------------------------------------------------------
-  Widget _buildHeader(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 768;
-
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      color: AppColors.primary,
-      child: Row(
-        children: [
-          if (isMobile)
-            IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: Icon(
-                Iconsax.arrow_left,
-                color: Colors.white,
-              ),
-            ),
-          Text(
-            'Refurb Laptops',
-            style: GoogleFonts.poppins(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const Spacer(),
-          Icon(Iconsax.shopping_cart, color: Colors.white),
-        ],
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // BREADCRUMBS
-  // ---------------------------------------------------------------------------
-  Widget _buildBreadcrumbs(ProductModel product) {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      color: AppColors.backgroundDark,
-      child: Row(
-        children: [
-          Text('Home',
-              style: GoogleFonts.poppins(
-                  color: AppColors.textSecondary)),
-          SizedBox(width: 8.w),
-          Icon(Iconsax.arrow_right_3, size: 14),
-          SizedBox(width: 8.w),
-          Text('New Arrivals',
-              style: GoogleFonts.poppins(
-                  color: AppColors.textSecondary)),
-          SizedBox(width: 8.w),
-          Icon(Iconsax.arrow_right_3, size: 14),
-          SizedBox(width: 8.w),
-          Expanded(
-            child: Text(
-              product.name,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // IMAGE GALLERY
-  // ---------------------------------------------------------------------------
-  Widget _buildImageGallery(
-      ProductModel product,
+  /// ---------------- IMAGE GALLERY ----------------
+  Widget _imageGallery(
+      BuildContext context,
+      NewArrivalModel product,
       ProductDetailState state,
       ProductDetailNotifier notifier,
       ) {
-    final images = product.allImages;
-    final int safeIndex =
-    state.selectedImageIndex.clamp(0, images.length - 1).toInt();
+    final images = product.images;
+    final index =
+    state.selectedImageIndex.clamp(0, images.length - 1);
 
-    return Column(
-      children: [
-        Container(
-          height: 420.h,
-          decoration: BoxDecoration(
-            color: AppColors.backgroundLight,
-            borderRadius: BorderRadius.circular(12.r),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Stack(
-            children: [
-              Center(
-                child: Image.asset(
-                  images[safeIndex],
-                  fit: BoxFit.contain,
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.symmetric(vertical: 16.h),
+      child: Column(
+        children: [
+          Container(
+            height: 350.h,
+            margin: EdgeInsets.symmetric(horizontal: 16.w),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16.r),
+              color: Colors.grey[100],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-              ),
-              if (images.length > 1)
-                Positioned(
-                  left: 12,
-                  top: 0,
-                  bottom: 0,
-                  child: IconButton(
-                    onPressed: notifier.previousImage,
-                    icon: _arrowButton(Iconsax.arrow_left_2),
-                  ),
-                ),
-              if (images.length > 1)
-                Positioned(
-                  right: 12,
-                  top: 0,
-                  bottom: 0,
-                  child: IconButton(
-                    onPressed: notifier.nextImage,
-                    icon: _arrowButton(Iconsax.arrow_right_3),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        SizedBox(height: 16.h),
-        if (images.length > 1)
-          SizedBox(
-            height: 90.h,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: images.length,
-              separatorBuilder: (_, __) =>
-                  SizedBox(width: 12.w),
-              itemBuilder: (context, index) {
-                final selected = index == safeIndex;
-                return GestureDetector(
-                  onTap: () => notifier.selectImage(index),
-                  child: Container(
-                    width: 90.w,
-                    decoration: BoxDecoration(
-                      borderRadius:
-                      BorderRadius.circular(8.r),
-                      border: Border.all(
-                        color: selected
-                            ? AppColors.primary
-                            : AppColors.border,
-                        width: selected ? 2 : 1,
+              ],
+            ),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16.r),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => FullScreenImageViewer(
+                            images: images,
+                            initialIndex: index,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Center(
+                      child: Image.network(
+                        images[index],
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) =>
+                            Icon(Icons.image, size: 80, color: Colors.grey[400]),
                       ),
                     ),
-                    child: Image.asset(
-                      images[index],
-                      fit: BoxFit.contain,
+                  ),
+                ),
+                if (images.length > 1)
+                  Positioned(
+                    left: 12,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: Icon(Icons.arrow_left, size: 20),
+                          color: AppColors.primary,
+                          onPressed: notifier.previousImage,
+                        ),
+                      ),
                     ),
                   ),
-                );
-              },
+                if (images.length > 1)
+                  Positioned(
+                    right: 12,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: Icon(Icons.arrow_right, size: 20),
+                          color: AppColors.primary,
+                          onPressed: () =>
+                              notifier.nextImage(images.length),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
-      ],
-    );
-  }
-
-  Widget _arrowButton(IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 4,
-            color: Colors.black.withOpacity(0.15),
-          ),
+          if (images.length > 1) ...[
+            SizedBox(height: 16.h),
+            SizedBox(
+              height: 70.h,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
+                itemCount: images.length,
+                itemBuilder: (context, i) {
+                  final isSelected = i == index;
+                  return GestureDetector(
+                    onTap: () {
+                      notifier.selectImage(i);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => FullScreenImageViewer(
+                            images: images,
+                            initialIndex: i,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 70.w,
+                      margin: EdgeInsets.only(right: 12.w),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: isSelected
+                              ? AppColors.primary
+                              : Colors.grey[300]!,
+                          width: isSelected ? 2 : 1,
+                        ),
+                        color: Colors.white,
+                      ),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(11.r),
+                            child: Image.network(
+                              images[i],
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  Icon(Icons.image, size: 30, color: Colors.grey[400]),
+                            ),
+                          ),
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: Container(
+                              padding: EdgeInsets.all(4.w),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.5),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.fullscreen,
+                                size: 12.sp,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ],
       ),
-      child: Icon(icon, color: AppColors.textPrimary),
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // PRODUCT DETAILS
-  // ---------------------------------------------------------------------------
-  Widget _buildProductDetails(ProductModel product) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          product.name,
-          style: GoogleFonts.poppins(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        SizedBox(height: 8.h),
-        Text(
-          '₹${NumberFormat('#,###').format(product.price)}',
-          style: GoogleFonts.poppins(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.bold,
-            color: AppColors.error,
-          ),
-        ),
-        SizedBox(height: 24.h),
-        callButton(product)
-      ],
-    );
-  }
+  /// ---------------- PRODUCT INFO ----------------
+  Widget _productInfo(NewArrivalModel product) {
+    final averageRating = _dummyReviews
+        .map((r) => r.rating)
+        .reduce((a, b) => a + b) /
+        _dummyReviews.length;
 
-  Widget callButton (ProductModel product){
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 600;
-
-        return isMobile
-            ? Column(
-          children: [
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: Icon(Iconsax.message),
-                label:  Text('WhatsApp Buy',style: TextStyle(fontSize: 12.sp),),
-                onPressed: () async {
-                  final uri = Uri.parse(
-                      'https://wa.me/${product.whatsappNumber}');
-                  await launchUrl(
-                    uri,
-                    mode: LaunchMode.externalApplication,
-                  );
-                },
-              ),
-            ),
-            SizedBox(height: 12.h),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                icon: Icon(Iconsax.call),
-                label:  Text('Call Now',style: TextStyle(fontSize: 12.sp)),
-                onPressed: () async {
-                  final uri =
-                  Uri.parse('tel:${product.name}');
-                  await launchUrl(uri);
-                },
-              ),
-            ),
-          ],
-        )
-            : Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                icon: Icon(Iconsax.message),
-                label: const Text('WhatsApp Buy'),
-                onPressed: () async {
-                  final uri = Uri.parse(
-                      'https://wa.me/${product.whatsappNumber}');
-                  await launchUrl(
-                    uri,
-                    mode: LaunchMode.externalApplication,
-                  );
-                },
-              ),
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: OutlinedButton.icon(
-                icon: Icon(Iconsax.call),
-                label: const Text('Call Now'),
-                onPressed: () async {
-                  final uri =
-                  Uri.parse('tel:${product.name}');
-                  await launchUrl(uri);
-                },
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // TABS SECTION
-  // ---------------------------------------------------------------------------
-  Widget _buildTabsSection(
-    BuildContext context,
-    ProductModel product,
-    ProductDetailState state,
-    ProductDetailNotifier notifier,
-  ) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 18.h),
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.all(20.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Tabs
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isMobile = constraints.maxWidth < 768;
-              if (isMobile) {
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  product.name,
+                  style: GoogleFonts.poppins(
+                    fontSize: 22.sp,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[900],
+                  ),
+                ),
+              ),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  borderRadius: BorderRadius.circular(20.r),
+                  border: Border.all(color: Colors.green[200]!),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_circle, size: 16.sp, color: Colors.green[700]),
+                    SizedBox(width: 4.w),
+                    Text(
+                      "In Stock",
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              Row(
+                children: List.generate(5, (i) {
+                  return Icon(
+                    i < averageRating.floor()
+                        ? Icons.star
+                        : (i < averageRating ? Icons.star_half : Icons.star_border),
+                    size: 18.sp,
+                    color: Colors.amber,
+                  );
+                }),
+              ),
+              SizedBox(width: 8.w),
+              Text(
+                "${averageRating.toStringAsFixed(1)}",
+                style: GoogleFonts.poppins(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[700],
+                ),
+              ),
+              SizedBox(width: 4.w),
+              Text(
+                "(${_dummyReviews.length} Reviews)",
+                style: GoogleFonts.poppins(
+                  fontSize: 13.sp,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 20.h),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                "₹${NumberFormat('#,###').format(product.price)}",
+                style: GoogleFonts.poppins(
+                  fontSize: 28.sp,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.accent,
+                ),
+              ),
+              SizedBox(width: 8.w),
+              Padding(
+                padding: EdgeInsets.only(bottom: 4.h),
+                child: Text(
+                  "Only",
+                  style: GoogleFonts.poppins(
+                    fontSize: 14.sp,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 24.h),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {},
+                  icon: Icon(Icons.message, size: 20),
+                  label: Text(
+                    "Contact Seller",
+                    style: GoogleFonts.poppins(
+                      fontSize: 15.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    elevation: 2,
+                  ),
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: IconButton(
+                  onPressed: () {},
+                  icon: Icon(Icons.monitor_heart, size: 24),
+                  color: Colors.grey[700],
+                  padding: EdgeInsets.all(16.w),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          Container(
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: Colors.blue[50],
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: Colors.blue[200]!),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.local_shipping, size: 24.sp, color: Colors.blue[700]),
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildTab(context, 'Overview', state.selectedTab == 'Overview', () {
-                        notifier.selectTab('Overview');
-                      }, isMobile),
-                      SizedBox(width: 16.w),
-                      _buildTab(context, 'Specifications', state.selectedTab == 'Specifications', () {
-                        notifier.selectTab('Specifications');
-                      }, isMobile),
-                      SizedBox(width: 16.w),
-                      _buildTab(context, 'Warranty', state.selectedTab == 'Warranty', () {
-                        notifier.selectTab('Warranty');
-                      }, isMobile),
-                      SizedBox(width: 16.w),
-                      _buildTab(context, 'Reviews (${product.reviews})', state.selectedTab == 'Reviews', () {
-                        notifier.selectTab('Reviews');
-                      }, isMobile),
+                      Text(
+                        "Free Shipping & 1 Year Warranty Included",
+                        style: GoogleFonts.poppins(
+                          fontSize: 13.sp,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.blue[900],
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        "Ships within 1-2 business days",
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.sp,
+                          color: Colors.blue[700],
+                        ),
+                      ),
                     ],
                   ),
-                );
-              } else {
-                return Row(
-                  children: [
-                    _buildTab(context, 'Overview', state.selectedTab == 'Overview', () {
-                      notifier.selectTab('Overview');
-                    }, isMobile),
-                    SizedBox(width: 24.w),
-                    _buildTab(context, 'Specifications', state.selectedTab == 'Specifications', () {
-                      notifier.selectTab('Specifications');
-                    }, isMobile),
-                    SizedBox(width: 24.w),
-                    _buildTab(context, 'Warranty', state.selectedTab == 'Warranty', () {
-                      notifier.selectTab('Warranty');
-                    }, isMobile),
-                    SizedBox(width: 24.w),
-                    _buildTab(context, 'Reviews (${product.reviews})', state.selectedTab == 'Reviews', () {
-                      notifier.selectTab('Reviews');
-                    }, isMobile),
-                  ],
-                );
-              }
-            },
-          ),
-          SizedBox(height: 32.h),
-          // Tab Content
-          _buildTabContent(context, product, state.selectedTab),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTab(BuildContext context, String title, bool isActive, VoidCallback onTap, bool isMobile) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: isMobile ? 14.sp : 16.sp,
-              fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-              color: isActive ? AppColors.primary : AppColors.textSecondary,
+                ),
+              ],
             ),
           ),
-          SizedBox(height: 8.h),
-          if (isActive)
-            Container(
-              height: 2.h,
-              width: isMobile ? 80.w : 100.w,
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(2.r),
-              ),
-            )
-          else
-            SizedBox(height: 2.h),
         ],
       ),
     );
   }
 
-  Widget _buildTabContent(BuildContext context, ProductModel product, String selectedTab) {
-    switch (selectedTab) {
-      case 'Specifications':
-        return _buildSpecificationsTable(context, product);
-      case 'Warranty':
-        return _buildWarrantyContent(context);
-      case 'Reviews':
-        return _buildReviewsContent(context, product);
-      case 'Overview':
-      default:
-        return _buildOverviewContent(context, product);
-    }
-  }
-
-  Widget _buildOverviewContent(BuildContext context, ProductModel product) {
-    return Text(
-      product.description,
-      style: GoogleFonts.poppins(
-        fontSize: 14.sp,
-        color: AppColors.textPrimary,
-        height: 1.6,
+  /// ---------------- TABS ----------------
+  Widget _tabs(BuildContext context, NewArrivalModel product) {
+    return Container(
+      color: Colors.white,
+      margin: EdgeInsets.only(top: 12.h),
+      child: DefaultTabController(
+        length: 3,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey[200]!, width: 1),
+                ),
+              ),
+              child: TabBar(
+                labelColor: AppColors.primary,
+                unselectedLabelColor: Colors.grey[600],
+                indicatorColor: AppColors.primary,
+                indicatorWeight: 3,
+                labelStyle: GoogleFonts.poppins(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+                unselectedLabelStyle: GoogleFonts.poppins(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w500,
+                ),
+                tabs: const [
+                  Tab(text: "Overview"),
+                  Tab(text: "Specifications"),
+                  Tab(text: "Reviews"),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 450.h,
+              child: TabBarView(
+                children: [
+                  _overview(product),
+                  _specifications(product),
+                  _reviews(product),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSpecificationsTable(BuildContext context, ProductModel product) {
-    final specs = product.detailedSpecs;
-    if (specs == null) {
-      return Text(
-        'No detailed specifications available.',
-        style: GoogleFonts.poppins(
-          fontSize: 14.sp,
-          color: AppColors.textSecondary,
+  /// ---------------- OVERVIEW ----------------
+  Widget _overview(NewArrivalModel product) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(20.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (product.overview != null && product.overview!.isNotEmpty) ...[
+            Text(
+              "Product Description",
+              style: GoogleFonts.poppins(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[900],
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              product.overview!,
+              style: GoogleFonts.poppins(
+                fontSize: 14.sp,
+                height: 1.8,
+                color: Colors.grey[700],
+              ),
+            ),
+          ] else
+            Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 40.h),
+                child: Column(
+                  children: [
+                    Icon(Icons.description_outlined,
+                        size: 48.sp, color: Colors.grey[400]),
+                    SizedBox(height: 12.h),
+                    Text(
+                      "No overview available",
+                      style: GoogleFonts.poppins(
+                        fontSize: 14.sp,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// ---------------- SPECIFICATIONS ----------------
+  Widget _specifications(NewArrivalModel product) {
+    final specs = [
+      _SpecItem(label: "Model", value: product.model),
+      _SpecItem(label: "Processor", value: product.processor),
+      _SpecItem(label: "RAM", value: product.ram),
+      _SpecItem(label: "Storage", value: product.storage),
+      _SpecItem(label: "Display", value: product.display),
+      _SpecItem(label: "Graphics", value: product.graphics),
+      _SpecItem(label: "Operating System", value: product.operatingSystem),
+    ];
+
+    // Filter out empty specifications
+    final validSpecs = specs.where((spec) => spec.value.isNotEmpty).toList();
+
+    if (validSpecs.isEmpty) {
+      return Padding(
+        padding: EdgeInsets.all(12.w),
+        child: Center(
+          child: Text(
+            "No specifications available",
+            style: GoogleFonts.poppins(
+              fontSize: 14.sp,
+              color: Colors.grey[600],
+            ),
+          ),
         ),
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.circular(12.r),
-        border: Border.all(color: AppColors.border),
-      ),
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(20.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          _buildSpecRow('Model', specs.model ?? product.name),
-          _buildSpecDivider(),
-          _buildSpecRow('Processor', specs.processor),
-          _buildSpecDivider(),
-          _buildSpecRow('RAM', specs.ram),
-          _buildSpecDivider(),
-          _buildSpecRow('Storage', specs.storage),
-          _buildSpecDivider(),
-          _buildSpecRow('Display', specs.display),
-          _buildSpecDivider(),
-          _buildSpecRow('Battery', specs.battery),
-          _buildSpecDivider(),
-          _buildSpecRow('Graphics', specs.graphics),
-          _buildSpecDivider(),
-          _buildSpecRow('Operating System', specs.operatingSystem),
-          if (specs.connectivity != null) ...[
-            _buildSpecDivider(),
-            _buildSpecRow('Connectivity', specs.connectivity),
-          ],
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: Colors.grey[200]!),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: List.generate(
+                validSpecs.length,
+                    (index) {
+                  final spec = validSpecs[index];
+                  final isLast = index == validSpecs.length - 1;
+
+                  return Container(
+                    decoration: BoxDecoration(
+                      border: isLast
+                          ? null
+                          : Border(
+                        bottom: BorderSide(
+                          color: Colors.grey[200]!,
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: _SpecRow(
+                      label: spec.label,
+                      value: spec.value,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSpecRow(String label, String? value) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 768;
-        return Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-          child: isMobile
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
+  /// ---------------- REVIEWS ----------------
+  Widget _reviews(NewArrivalModel product) {
+    final averageRating = _dummyReviews
+        .map((r) => r.rating)
+        .reduce((a, b) => a + b) /
+        _dummyReviews.length;
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(20.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Customer Reviews",
+                    style: GoogleFonts.poppins(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[900],
                     ),
-                    SizedBox(height: 4.h),
-                    Text(
-                      value ?? 'N/A',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14.sp,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                )
-              : Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 150.w,
-                      child: Text(
-                        label,
+                  ),
+                  SizedBox(height: 4.h),
+                  Row(
+                    children: [
+                      Text(
+                        averageRating.toStringAsFixed(1),
                         style: GoogleFonts.poppins(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          fontSize: 24.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[900],
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        value ?? 'N/A',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14.sp,
-                          color: AppColors.textSecondary,
-                        ),
+                      SizedBox(width: 8.w),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: List.generate(5, (i) {
+                              return Icon(
+                                i < averageRating.floor()
+                                    ? Icons.star
+                                    : (i < averageRating
+                                    ? Icons.star_half
+                                    : Icons.star_border),
+                                size: 16.sp,
+                                color: Colors.amber,
+                              );
+                            }),
+                          ),
+                          SizedBox(height: 2.h),
+                          Text(
+                            "${_dummyReviews.length} reviews",
+                            style: GoogleFonts.poppins(
+                              fontSize: 12.sp,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSpecDivider() {
-    return Divider(
-      height: 1,
-      thickness: 1,
-      color: AppColors.border,
-    );
-  }
-
-  Widget _buildWarrantyContent(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '1 Year Warranty Included',
-          style: GoogleFonts.poppins(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+                    ],
+                  ),
+                ],
+              ),
+            ],
           ),
-        ),
-        SizedBox(height: 12.h),
-        Text(
-          'Get a full year warranty on all refurbished laptops. Buy with confidence knowing your purchase is protected.',
-          style: GoogleFonts.poppins(
-            fontSize: 12.sp,
-            color: AppColors.textSecondary,
-            height: 1.6,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildReviewsContent(BuildContext context, ProductModel product) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Customer Reviews',
-          style: GoogleFonts.poppins(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        SizedBox(height: 10.h),
-        Text(
-          '${product.reviews} customer reviews',
-          style: GoogleFonts.poppins(
-            fontSize: 14.sp,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
+          SizedBox(height: 24.h),
+          ..._dummyReviews.map((review) => _ReviewCard(review: review)),
+        ],
+      ),
     );
   }
 }

@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:iconsax/iconsax.dart';
-import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widget/best_deal_slider.dart';
+import '../../../widget/new_arrival_slider.dart';
 import '../providers/home_provider.dart';
 import 'new_arrivals_list_page.dart';
-import 'product_detail_page.dart';
-
-
+import 'package:bytebox/widget/banner_widget.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -19,20 +17,31 @@ class HomePage extends ConsumerWidget {
     final homeState = ref.watch(homeProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.backgroundLight,
       body: SafeArea(
+        bottom: false,
         child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
           slivers: [
-            SliverToBoxAdapter(child: _buildHeader(context, homeState)),
-            SliverToBoxAdapter(child: _buildHeroSection()),
+            SliverToBoxAdapter(child: _buildHeader(context)),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 24.h),
+                child: SizedBox(height: 200.h, child: const BannerSlider()),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: _buildServiceHighlights(),
+            ),
             SliverToBoxAdapter(
               child: _buildNewArrivalsSection(context, homeState),
             ),
             SliverToBoxAdapter(
               child: _buildBestDealsSection(context, homeState),
             ),
-            SliverToBoxAdapter(child: _buildServiceHighlights()),
-            SliverToBoxAdapter(child: SizedBox(height: 20.h)),
+            SliverToBoxAdapter(
+              child: SizedBox(height: 24.h),
+            ),
           ],
         ),
       ),
@@ -40,133 +49,174 @@ class HomePage extends ConsumerWidget {
   }
 
   // ---------------- HEADER ----------------
-  Widget _buildHeader(BuildContext context, HomeState homeState) {
+  Widget _buildHeader(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
       decoration: BoxDecoration(
         color: AppColors.background,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
+            blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 40.w,
-                    height: 40.w,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(8.r),
-                    ),
-                    child: const Icon(Iconsax.lamp, color: Colors.white),
-                  ),
-                  SizedBox(width: 12.w),
-                  Text(
-                    'RefurbLaptops',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              IconButton(
-                icon: const Icon(Iconsax.shopping_cart),
-                onPressed: () {},
-              ),
-              IconButton(
-                icon: const Icon(Iconsax.call),
-                onPressed: () {},
-              ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: homeState.navigationItems.map((item) {
-                final isActive = item == 'Home';
-                return Padding(
-                  padding: EdgeInsets.only(right: 24.w),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                // Logo/Brand Section
+                Expanded(
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item,
+                        'RefurbLaptops',
                         style: GoogleFonts.poppins(
-                          fontWeight:
-                          isActive ? FontWeight.w600 : FontWeight.normal,
-                          color: isActive
-                              ? AppColors.primary
-                              : AppColors.textSecondary,
+                          fontSize: 24.sp,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                          letterSpacing: -0.5,
                         ),
                       ),
-                      if (isActive)
-                        Container(
-                          margin: EdgeInsets.only(top: 4.h),
-                          height: 2,
-                          width: 30,
-                          color: AppColors.primary,
+                      SizedBox(height: 2.h),
+                      Text(
+                        'Quality Refurbished Laptops',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.sp,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w400,
                         ),
+                      ),
                     ],
                   ),
-                );
-              }).toList(),
+                ),
+                // Cart Icon with Badge
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundLight,
+                        shape: BoxShape.circle,
+                      ),
+                      padding: EdgeInsets.all(10.w),
+                      child: Icon(
+                        Icons.shopping_cart_outlined,
+                        color: AppColors.textPrimary,
+                        size: 22.sp,
+                      ),
+                    ),
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      child: Container(
+                        padding: EdgeInsets.all(4.w),
+                        decoration: const BoxDecoration(
+                          color: AppColors.accent,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '0',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10.sp,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(width: 12.w),
+                // Notification Icon
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundLight,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: EdgeInsets.all(10.w),
+                  child: Icon(
+                    Icons.notifications_outlined,
+                    color: AppColors.textPrimary,
+                    size: 22.sp,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+            SizedBox(height: 16.h),
+            // Search Bar
+            Container(
+              decoration: BoxDecoration(
+                color: AppColors.backgroundLight,
+                borderRadius: BorderRadius.circular(16.r),
+                border: Border.all(color: AppColors.border, width: 1),
+              ),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search laptops, brands, models...',
+                  hintStyle: GoogleFonts.poppins(
+                    fontSize: 14.sp,
+                    color: AppColors.textTertiary,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: AppColors.textSecondary,
+                    size: 22.sp,
+                  ),
+                  suffixIcon: Container(
+                    margin: EdgeInsets.all(6.w),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Icon(
+                      Icons.tune,
+                      color: Colors.white,
+                      size: 18.sp,
+                    ),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 14.h,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    );
-  }
-
-  // ---------------- HERO ----------------
-  Widget _buildHeroSection() {
-    final banners = [
-      'assets/images/banner/home_banner.png',
-      'assets/images/banner/home_banner.png',
-    ];
-
-    return _AutoScrollBanner(
-      bannerImages: banners,
-      height: 300.h,
     );
   }
 
   // ---------------- NEW ARRIVALS ----------------
   Widget _buildNewArrivalsSection(
       BuildContext context, HomeState homeState) {
-    return Padding(
-      padding: EdgeInsets.all(20.w),
+    return Container(
+      margin: EdgeInsets.only(bottom: 24.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _sectionHeader(
-            title: 'New Arrivals',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const NewArrivalsListPage(),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: _sectionHeader(
+              title: 'New Arrivals',
+              subtitle: 'Latest additions to our collection',
+              icon: Icons.new_releases_rounded,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const NewArrivalsPage(),
+                ),
               ),
             ),
           ),
           SizedBox(height: 16.h),
-          SizedBox(
-            height: 350.h,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: homeState.newArrivals.length,
-              itemBuilder: (_, i) =>
-                  _productCard(context, homeState.newArrivals[i]),
-            ),
-          ),
+          NewArrivalSlider(),
         ],
       ),
     );
@@ -176,261 +226,254 @@ class HomePage extends ConsumerWidget {
   Widget _buildBestDealsSection(
       BuildContext context, HomeState homeState) {
     return Container(
-      color: AppColors.backgroundLight,
-      padding: EdgeInsets.all(20.w),
+      margin: EdgeInsets.only(bottom: 24.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _sectionHeader(title: 'Best Deals', onTap: () {}),
-          SizedBox(height: 16.h),
-          SizedBox(
-            height: 320.h,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: homeState.bestDeals.length,
-              itemBuilder: (_, i) =>
-                  _productCard(context, homeState.bestDeals[i]),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: _sectionHeader(
+              title: 'Best Deals',
+              subtitle: 'Special offers just for you',
+              icon: Icons.local_offer_rounded,
+              onTap: () => {}/*Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const BestDealsPage(),
+                ),
+              ),*/
             ),
           ),
+          SizedBox(height: 16.h),
+          BestDealSlider(),
         ],
       ),
     );
   }
 
-  // ---------------- PRODUCT CARD ----------------
-  Widget _productCard(BuildContext context, ProductModel product) {
-    return Container(
-      width: 240.w,
-      margin: EdgeInsets.only(right: 16.w),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12.r),
-        color: AppColors.background,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.cardShadow,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          /// Product Image
-          GestureDetector(
-            onTap: () => _goToDetail(context, product),
-            child: ClipRRect(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
-              child: Image.asset(
-                product.imageUrl,
-                height: 140.h,
-                width: double.infinity,
-                fit: BoxFit.contain,
+  Widget _sectionHeader({
+    required String title,
+    String? subtitle,
+    IconData? icon,
+    required VoidCallback onTap,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              if (icon != null) ...[
+                Container(
+                  padding: EdgeInsets.all(8.w),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: AppColors.primary,
+                    size: 20.sp,
+                  ),
+                ),
+                SizedBox(width: 12.w),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14.sp,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      SizedBox(height: 4.h),
+                      Text(
+                        subtitle,
+                        style: GoogleFonts.poppins(
+                          fontSize: 10.sp,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
-
-          Padding(
-            padding: EdgeInsets.all(12.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+        SizedBox(width: 12.w),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                /// Product Name
                 Text(
-                  product.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  'See All',
                   style: GoogleFonts.poppins(
-                    fontSize: 14.sp,
+                    fontSize: 10.sp,
+                    color: AppColors.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-
-                SizedBox(height: 6.h),
-
-                /// RAM & Storage
-              /*  Text(
-                  "${product.description} RAM • ${product.description}",
-                  style: GoogleFonts.poppins(
-                    fontSize: 12.sp,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-
-                SizedBox(height: 4.h),*/
-
-                /// Processor / Specification
-                Text(
-                  product.specifications ?? "Specifications not available", // e.g. i5 10th Gen | SSD
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12.sp,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-
-                SizedBox(height: 8.h),
-
-                /// Price
-                Text(
-                  "₹${NumberFormat('#,###').format(product.price)}",
-                  style: GoogleFonts.poppins(
-                    fontSize: 15.sp,
-                    color: AppColors.accent,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                SizedBox(height: 10.h),
-
-                /// View Details Button
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () => _goToDetail(context, product),
-                    style: OutlinedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.r),
-                      ),
-                    ),
-                    child: Text(
-                      "View Details",
-                      style: GoogleFonts.poppins(fontSize: 12.sp),
-                    ),
-                  ),
+                SizedBox(width: 4.w),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 12.sp,
+                  color: AppColors.primary,
                 ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-
-  void _goToDetail(BuildContext context, ProductModel product) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ProductDetailPage(product: product),
-      ),
-    );
-  }
-
-  // ---------------- SERVICES ----------------
-  Widget _buildServiceHighlights() {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 24.h),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: const [
-          _ServiceItem(Iconsax.truck, 'Free Shipping', 'All Orders'),
-          _ServiceItem(Iconsax.shield_tick, 'Warranty', '1 Year'),
-          _ServiceItem(Iconsax.headphone, 'Support', '24/7 Help'),
-        ],
-      ),
-    );
-  }
-
-  // ---------------- COMMON ----------------
-  Widget _sectionHeader({required String title, required VoidCallback onTap}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style:
-          GoogleFonts.poppins(fontSize: 16.sp, fontWeight: FontWeight.bold),
-        ),
-        GestureDetector(
-          onTap: onTap,
-          child: Text(
-            'See All',
-            style: GoogleFonts.poppins(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
         ),
       ],
     );
   }
-}
 
-
-// ---------------- BANNER ----------------
-class _AutoScrollBanner extends StatefulWidget {
-  final List<String> bannerImages;
-  final double height;
-
-  const _AutoScrollBanner({
-    required this.bannerImages,
-    required this.height,
-  });
-
-  @override
-  State<_AutoScrollBanner> createState() => _AutoScrollBannerState();
-}
-
-class _AutoScrollBannerState extends State<_AutoScrollBanner> {
-  final PageController _controller = PageController();
-  int index = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _startAutoScroll();
-  }
-
-  void _startAutoScroll() async {
-    while (mounted) {
-      await Future.delayed(const Duration(seconds: 4));
-      if (!mounted) break;
-
-      index = (index + 1) % widget.bannerImages.length;
-      _controller.animateToPage(
-        index,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: widget.height,
-      child: PageView.builder(
-        controller: _controller,
-        itemCount: widget.bannerImages.length,
-        itemBuilder: (_, i) => Image.asset(
-          widget.bannerImages[i],
-          fit: BoxFit.cover,
-          width: double.infinity,
-        ),
+  Widget _buildServiceHighlights() {
+    return Container(
+      margin: EdgeInsets.only(bottom: 24.h),
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Why Choose Us',
+            style: GoogleFonts.poppins(
+              fontSize: 12.sp,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: 16.h),
+          Row(
+            children: [
+              Expanded(
+                child: _ServiceItem(
+                  icon: Icons.local_shipping_rounded,
+                  title: 'Free Shipping',
+                  subtitle: 'All Orders',
+                  gradient: [AppColors.primary, AppColors.primaryLight],
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: _ServiceItem(
+                  icon: Icons.verified_user_rounded,
+                  title: 'Warranty',
+                  subtitle: '1 Year',
+                  gradient: [AppColors.success, const Color(0xFF34D399)],
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: _ServiceItem(
+                  icon: Icons.support_agent_rounded,
+                  title: 'Support',
+                  subtitle: '24/7',
+                  gradient: [AppColors.accent, AppColors.accentLight],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
-// ---------------- SERVICE ITEM ----------------
 class _ServiceItem extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
+  final List<Color> gradient;
 
-  const _ServiceItem(this.icon, this.title, this.subtitle);
+  const _ServiceItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.gradient,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, color: AppColors.primary, size: 28),
-        SizedBox(height: 8.h),
-        Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-        Text(subtitle, style: GoogleFonts.poppins(fontSize: 12)),
-      ],
+    return Container(
+      constraints: BoxConstraints(
+        minHeight: 100.h,
+      ),
+      padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradient,
+        ),
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: gradient[0].withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.w),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 20.sp,
+              color: Colors.white,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 10.sp,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          SizedBox(height: 2.h),
+          Text(
+            subtitle,
+            style: GoogleFonts.poppins(
+              fontSize: 8.sp,
+              color: Colors.white.withOpacity(0.9),
+              fontWeight: FontWeight.w400,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,9 +1,10 @@
+import 'package:bytebox/model/NewArrivalModel.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'home_provider.dart';
 
 // Product Detail State
 class ProductDetailState {
-  final ProductModel? product;
+  final NewArrivalModel? product;
   final int selectedImageIndex;
   final String selectedTab; // 'Overview', 'Specifications', 'Warranty', 'Reviews'
 
@@ -14,7 +15,7 @@ class ProductDetailState {
   });
 
   ProductDetailState copyWith({
-    ProductModel? product,
+    NewArrivalModel? product,
     int? selectedImageIndex,
     String? selectedTab,
   }) {
@@ -30,8 +31,8 @@ class ProductDetailState {
 class ProductDetailNotifier extends StateNotifier<ProductDetailState> {
   ProductDetailNotifier() : super(ProductDetailState());
 
-  void setProduct(ProductModel product) {
-    final images = product.allImages;
+  void setProduct(NewArrivalModel product) {
+    final images = product.images;
     final safeIndex = images.isNotEmpty ? 0 : 0;
     state = ProductDetailState(
       product: product,
@@ -42,7 +43,7 @@ class ProductDetailNotifier extends StateNotifier<ProductDetailState> {
 
   void selectImage(int index) {
     if (state.product != null) {
-      final images = state.product!.allImages;
+      final images = state.product!.images;
       if (images.isNotEmpty && index >= 0 && index < images.length) {
         state = state.copyWith(selectedImageIndex: index);
       }
@@ -55,7 +56,7 @@ class ProductDetailNotifier extends StateNotifier<ProductDetailState> {
 
   void nextImage() {
     if (state.product != null) {
-      final images = state.product!.allImages;
+      final images = state.product!.images;
       if (images.isNotEmpty) {
         final nextIndex = (state.selectedImageIndex + 1) % images.length;
         state = state.copyWith(selectedImageIndex: nextIndex);
@@ -65,7 +66,7 @@ class ProductDetailNotifier extends StateNotifier<ProductDetailState> {
 
   void previousImage() {
     if (state.product != null) {
-      final images = state.product!.allImages;
+      final images = state.product!.images;
       if (images.isNotEmpty) {
         final prevIndex = (state.selectedImageIndex - 1 + images.length) % images.length;
         state = state.copyWith(selectedImageIndex: prevIndex);

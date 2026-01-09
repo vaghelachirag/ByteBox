@@ -1,12 +1,26 @@
+import 'package:bytebox/features/home/admin/admin_home.dart';
+import 'package:bytebox/features/home/presentation/home_page_new.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import 'core/constants/app_colors.dart';
-import 'features/home/presentation/home_page_new.dart';
 
-void main() {
+void main() async{
+
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: FirebaseOptions(
+      apiKey: "AIzaSyCYS0i2NaYtWXFjD5IohVHoREygxIMU8NU",
+      appId: "1:685282199422:ios:a95ad3f60314f2be5cd52",
+      messagingSenderId: "685282199422",
+      projectId: "bytebox-96b6a",
+      databaseURL: "https://bytebox-96b6a-default-rtdb.firebaseio.com",
+    ),
+  );
+
   runApp(
     const ProviderScope(
       child: MyApp(),
@@ -100,7 +114,7 @@ class MyApp extends StatelessWidget {
           home: child,
         );
       },
-      child: const HomePage(),
+      child:  HomePage(),
     );
   }
 }
