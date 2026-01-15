@@ -1,5 +1,6 @@
 class NewArrivalModel {
   final String id;
+  final String company;
   final String name;
   final String model;
   final String overview;
@@ -15,6 +16,7 @@ class NewArrivalModel {
 
   NewArrivalModel({
     required this.id,
+    required this.company,
     required this.name,
     required this.model,
     required this.overview,
@@ -32,6 +34,7 @@ class NewArrivalModel {
   factory NewArrivalModel.fromMap(String id, Map<dynamic, dynamic> map) {
     return NewArrivalModel(
       id: id,
+      company: map['company'] ?? '',
       name: map['name'] ?? '',
       model: map['model'] ?? '',
       overview: map['overview'] ?? '',

@@ -46,6 +46,7 @@ class HomePage extends ConsumerWidget {
         ),
       ),
     );
+
   }
 
   // ---------------- HEADER ----------------
@@ -221,6 +222,7 @@ class HomePage extends ConsumerWidget {
       ),
     );
   }
+
 
   // ---------------- BEST DEALS ----------------
   Widget _buildBestDealsSection(

@@ -23,3 +23,4 @@ StreamProvider<List<NewArrivalModel>>((ref) {
     }).toList();
   });
 });
+

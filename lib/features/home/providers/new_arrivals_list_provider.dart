@@ -14,29 +14,30 @@ final sortOptions = ['Newest First', 'Price: Low to High', 'Price: High to Low',
 /// Firebase provider to get all new arrivals products
 /// Uses StreamProvider for real-time updates
 final newArrivalsFirebaseProvider =
-    StreamProvider<List<NewArrivalModel>>((ref) {
+StreamProvider<List<NewArrivalModel>>((ref) {
+  ref.keepAlive();
   final refDb = FirebaseDatabase.instance.ref('new_arrivals');
 
   return refDb.onValue.map((event) {
     final snapshot = event.snapshot;
-    
+
     // If snapshot doesn't exist, return empty list
     if (!snapshot.exists || snapshot.value == null) {
       return <NewArrivalModel>[];
     }
 
     final data = snapshot.value;
-    
+
     // Handle different data types
     if (data is! Map) {
       return <NewArrivalModel>[];
     }
 
     final Map<dynamic, dynamic> dataMap = data as Map<dynamic, dynamic>;
-    
+
     // Parse all products from Firebase
     final List<NewArrivalModel> products = [];
-    
+
     dataMap.forEach((key, value) {
       try {
         if (value is Map) {
@@ -50,7 +51,6 @@ final newArrivalsFirebaseProvider =
           }
         }
       } catch (e) {
-        // Skip invalid products and continue
         print('Error parsing product $key: $e');
       }
     });
@@ -105,11 +105,9 @@ class NewArrivalsListNotifier extends StateNotifier<FilterState> {
 
   NewArrivalsListNotifier(this.ref) : super(FilterState());
 
-  /// Get all products from Firebase
-  /// Returns empty list if loading or error
   List<NewArrivalModel> get allProducts {
     final asyncValue = ref.watch(newArrivalsFirebaseProvider);
-    
+
     return asyncValue.when(
       data: (list) => list,
       loading: () => [],
@@ -154,8 +152,7 @@ class NewArrivalsListNotifier extends StateNotifier<FilterState> {
     state = FilterState();
   }
 
-  /// Get filtered and sorted products
-  /// Applies all active filters and sorting
+
   List<NewArrivalModel> get filteredProducts {
     // Start with all products
     var products = List<NewArrivalModel>.from(allProducts);
@@ -171,7 +168,6 @@ class NewArrivalsListNotifier extends StateNotifier<FilterState> {
       }).toList();
     }
 
-    // Apply brand filter (checking both model and name)
     if (state.selectedBrands.isNotEmpty) {
       products = products.where((p) {
         final productBrand = p.model.toLowerCase();
@@ -184,7 +180,6 @@ class NewArrivalsListNotifier extends StateNotifier<FilterState> {
       }).toList();
     }
 
-    // Apply price range filter
     products = products
         .where((p) => p.price >= state.minPrice && p.price <= state.maxPrice)
         .toList();
@@ -192,8 +187,8 @@ class NewArrivalsListNotifier extends StateNotifier<FilterState> {
     // Apply RAM filter
     if (state.selectedRAM.isNotEmpty) {
       products = products.where((p) {
-        return state.selectedRAM.any((ram) => 
-          p.ram.toLowerCase().contains(ram.toLowerCase())
+        return state.selectedRAM.any((ram) =>
+            p.ram.toLowerCase().contains(ram.toLowerCase())
         );
       }).toList();
     }
@@ -201,8 +196,8 @@ class NewArrivalsListNotifier extends StateNotifier<FilterState> {
     // Apply storage filter
     if (state.selectedSSD.isNotEmpty) {
       products = products.where((p) {
-        return state.selectedSSD.any((ssd) => 
-          p.storage.toLowerCase().contains(ssd.toLowerCase())
+        return state.selectedSSD.any((ssd) =>
+            p.storage.toLowerCase().contains(ssd.toLowerCase())
         );
       }).toList();
     }
@@ -223,7 +218,7 @@ class NewArrivalsListNotifier extends StateNotifier<FilterState> {
         break;
       case 'Newest First':
       default:
-        // Keep original order (newest first based on Firebase order)
+      // Keep original order (newest first based on Firebase order)
         break;
     }
 
@@ -232,5 +227,7 @@ class NewArrivalsListNotifier extends StateNotifier<FilterState> {
 }
 final newArrivalsListProvider =
 StateNotifierProvider<NewArrivalsListNotifier, FilterState>((ref) {
+  ref.keepAlive();
   return NewArrivalsListNotifier(ref);
 });
+
