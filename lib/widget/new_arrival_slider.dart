@@ -100,6 +100,10 @@ class NewArrivalSlider extends ConsumerWidget {
               final item = arrivals[index];
               return Container(
                 width: 240.w,
+                constraints: BoxConstraints(
+                  maxHeight: calculatedHeight,
+                ),
+                clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16.r),
                   color: AppColors.background,

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -5,55 +6,37 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../model/NewArrivalModel.dart';
-import '../../../widget/product_card.dart';
+import '../../../model/best_deal_model.dart';
 
-/// ------------------------------------------------------------
-/// FILTER OPTIONS
-/// ------------------------------------------------------------
-const availableBrands = ['Dell', 'HP', 'Lenovo', 'Apple', 'Asus'];
-const availableRAM = ['8 GB', '12 GB','16 GB', '32 GB'];
-const availableSSD = ['256 GB', '512 GB', '1 TB'];
-
-class NewArrivalsPage extends StatefulWidget {
-  const NewArrivalsPage({super.key});
+class BestDealListPage extends StatefulWidget {
+  const BestDealListPage({super.key});
 
   @override
-  State<NewArrivalsPage> createState() => _NewArrivalsPageState();
+  State<BestDealListPage> createState() => _BestDealListPageState();
 }
 
-class _NewArrivalsPageState extends State<NewArrivalsPage> {
-  final _dbRef = FirebaseDatabase.instance.ref('new_arrivals');
+class _BestDealListPageState extends State<BestDealListPage> {
+  final _dbRef = FirebaseDatabase.instance.ref('best_deals');
 
   String searchQuery = '';
-
-  final Set<String> selectedBrands = {};
-  final Set<String> selectedRAM = {};
-  final Set<String> selectedStorage = {};
   double minPrice = 0;
   double maxPrice = 200000;
 
-  List<NewArrivalModel> _applyAll(List<NewArrivalModel> list) {
+  List<BestDealModel> _applyAll(List<BestDealModel> list) {
     final searched = searchQuery.isEmpty
         ? list
         : list.where((p) {
       return p.name
           .toLowerCase()
           .contains(searchQuery.toLowerCase()) ||
-          p.processor
+          p.overview
               .toLowerCase()
               .contains(searchQuery.toLowerCase());
     }).toList();
 
     return searched.where((p) {
-      final brandOk =
-          selectedBrands.isEmpty || selectedBrands.contains(p.company);
-      final ramOk = selectedRAM.isEmpty || selectedRAM.contains(p.ram);
-      final storageOk =
-          selectedStorage.isEmpty || selectedStorage.contains(p.storage);
       final priceOk = p.price >= minPrice && p.price <= maxPrice;
-
-      return brandOk && ramOk && storageOk && priceOk;
+      return priceOk;
     }).toList();
   }
 
@@ -63,22 +46,10 @@ class _NewArrivalsPageState extends State<NewArrivalsPage> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => FilterBottomSheet(
-        selectedBrands: selectedBrands,
-        selectedRAM: selectedRAM,
-        selectedStorage: selectedStorage,
         minPrice: minPrice,
         maxPrice: maxPrice,
-        onApply: (b, r, s, min, max) {
+        onApply: (min, max) {
           setState(() {
-            selectedBrands
-              ..clear()
-              ..addAll(b);
-            selectedRAM
-              ..clear()
-              ..addAll(r);
-            selectedStorage
-              ..clear()
-              ..addAll(s);
             minPrice = min;
             maxPrice = max;
           });
@@ -100,18 +71,15 @@ class _NewArrivalsPageState extends State<NewArrivalsPage> {
     final cardWidth = availableWidth / 2; // 2 columns
 
     // Calculate card height based on width (maintain aspect ratio) or screen height
-    // ProductCard has image (flex 5) and details (flex 4) sections with padding
-    // Using a taller aspect ratio to accommodate all content without overflow
-    // Added 10.h buffer to prevent RenderFlex overflow errors
     final cardHeight = ((cardWidth / 0.65) + 10.h).clamp(
-      cardWidth * 1.5, // Minimum height (1.5:1 aspect ratio) - increased to prevent overflow
+      cardWidth * 1.5, // Minimum height (1.5:1 aspect ratio)
       screenHeight * 0.5, // Maximum height (50% of screen height)
     );
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('New Arrivals'),
+        title: const Text('Best Deals'),
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list_rounded),
@@ -126,7 +94,7 @@ class _NewArrivalsPageState extends State<NewArrivalsPage> {
             child: TextField(
               onChanged: (v) => setState(() => searchQuery = v),
               decoration: InputDecoration(
-                hintText: 'Search laptops...',
+                hintText: 'Search best deals...',
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: AppColors.background,
@@ -155,10 +123,11 @@ class _NewArrivalsPageState extends State<NewArrivalsPage> {
 
                 final map = Map<dynamic, dynamic>.from(data as Map);
                 final allProducts = map.entries
-                    .map((e) => NewArrivalModel.fromMap(
+                    .map((e) => BestDealModel.fromMap(
                   e.key,
                   Map<dynamic, dynamic>.from(e.value),
                 ))
+                    .where((p) => p.isActive)
                     .toList();
 
                 final products = _applyAll(allProducts);
@@ -175,7 +144,7 @@ class _NewArrivalsPageState extends State<NewArrivalsPage> {
                   ),
                   itemCount: products.length,
                   itemBuilder: (_, i) =>
-                      ProductCard(product: products[i]),
+                      BestDealCard(product: products[i]),
                 );
               },
             ),
@@ -185,22 +154,296 @@ class _NewArrivalsPageState extends State<NewArrivalsPage> {
     );
   }
 }
+
+class BestDealCard extends StatelessWidget {
+  final BestDealModel product;
+
+  const BestDealCard({
+    super.key,
+    required this.product,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shadowColor: AppColors.cardShadow,
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.r),
+        side: BorderSide(
+          color: AppColors.border,
+          width: 0.5,
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12.r),
+        onTap: () {
+          // Navigate to detail page if needed
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 5,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Product Image
+                  product.images.isNotEmpty
+                      ? CachedNetworkImage(
+                    imageUrl: product.images.first,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    placeholder: (_, __) => Container(
+                      color: AppColors.backgroundDark,
+                      child: Center(
+                        child: CircularProgressIndicator.adaptive(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.primary,
+                          ),
+                          strokeWidth: 2.w,
+                        ),
+                      ),
+                    ),
+                    errorWidget: (_, __, ___) => Container(
+                      color: AppColors.backgroundDark,
+                      child: Icon(
+                        Icons.image_not_supported_rounded,
+                        size: 40.sp,
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                  )
+                      : Container(
+                    color: AppColors.backgroundDark,
+                    child: Icon(
+                      Icons.image_not_supported_rounded,
+                      size: 40.sp,
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+
+                  // Gradient overlay
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      height: 40.h,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.1),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Discount Badge
+                  if (product.discount > 0)
+                    Positioned(
+                      top: 8.h,
+                      left: 8.w,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 4.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.accent,
+                          borderRadius: BorderRadius.circular(6.r),
+                        ),
+                        child: Text(
+                          '${product.discount.toStringAsFixed(0)}% OFF',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10.sp,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: EdgeInsets.all(12.w),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Top Section: Product Name
+                    Flexible(
+                      flex: 1,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            product.company,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Middle Section: Overview
+                    Flexible(
+                      flex: 1,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            product.name,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 10.sp,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Bottom Section: Price and Add Button
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Price
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Original Price (always shown, with strikethrough if discounted)
+                              Row(
+                                children: [
+                                  Text(
+                                    '₹${NumberFormat('#,##0').format(product.originalPrice)}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: product.discountPrice > 0 ? 11.sp : 16.sp,
+                                      fontWeight: product.discountPrice > 0 ? FontWeight.w500 : FontWeight.bold,
+                                      color: product.discountPrice > 0
+                                          ? AppColors.textSecondary
+                                          : AppColors.error,
+                                      decoration: product.discountPrice > 0
+                                          ? TextDecoration.lineThrough
+                                          : null,
+                                    ),
+                                  ),
+                                  if (product.discountPrice > 0) ...[
+                                    SizedBox(width: 6.w),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 4.w,
+                                        vertical: 2.h,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.accent.withOpacity(0.15),
+                                        borderRadius: BorderRadius.circular(4.r),
+                                      ),
+                                      child: Text(
+                                        '${product.discountPercent.toStringAsFixed(0)}% OFF',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 9.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.accent,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              // Discounted Price (shown only if there's a discount)
+                              if (product.originalPrice > 0) ...[
+                                SizedBox(height: 2.h),
+                                Text(
+                                  '₹${NumberFormat('#,##0').format(product.originalPrice)}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.error,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+
+                        // Add Button
+                        SizedBox(
+                          height: 32.h,
+                          child: FilledButton(
+                            onPressed: () {},
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.accent,
+                              foregroundColor: Colors.white,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12.w,
+                                vertical: 0,
+                              ),
+                              minimumSize: Size(0, 32.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.r),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              'Add',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11.sp,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// ------------------------------------------------------------
 /// REDESIGNED FILTER BOTTOM SHEET
 /// ------------------------------------------------------------
 class FilterBottomSheet extends StatefulWidget {
-  final Set<String> selectedBrands;
-  final Set<String> selectedRAM;
-  final Set<String> selectedStorage;
   final double minPrice;
   final double maxPrice;
-  final Function(Set<String>, Set<String>, Set<String>, double, double) onApply;
+  final Function(double, double) onApply;
 
   const FilterBottomSheet({
     super.key,
-    required this.selectedBrands,
-    required this.selectedRAM,
-    required this.selectedStorage,
     required this.minPrice,
     required this.maxPrice,
     required this.onApply,
@@ -211,27 +454,18 @@ class FilterBottomSheet extends StatefulWidget {
 }
 
 class _FilterBottomSheetState extends State<FilterBottomSheet> {
-  late Set<String> brands;
-  late Set<String> ram;
-  late Set<String> storage;
   late double min;
   late double max;
 
   @override
   void initState() {
     super.initState();
-    brands = {...widget.selectedBrands};
-    ram = {...widget.selectedRAM};
-    storage = {...widget.selectedStorage};
     min = widget.minPrice;
     max = widget.maxPrice;
   }
 
   int get _activeFilterCount {
     int count = 0;
-    if (brands.isNotEmpty) count += brands.length;
-    if (ram.isNotEmpty) count += ram.length;
-    if (storage.isNotEmpty) count += storage.length;
     if (min > 0 || max < 200000) count += 1;
     return count;
   }
@@ -240,7 +474,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.85,
+        height: MediaQuery.of(context).size.height * 0.5,
         decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
@@ -312,9 +546,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   TextButton.icon(
                     onPressed: () {
                       setState(() {
-                        brands.clear();
-                        ram.clear();
-                        storage.clear();
                         min = 0;
                         max = 200000;
                       });
@@ -349,27 +580,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSection(
-                      icon: Icons.branding_watermark_rounded,
-                      title: 'Brand',
-                      items: availableBrands,
-                      selected: brands,
-                    ),
-                    SizedBox(height: 20.h),
-                    _buildSection(
-                      icon: Icons.memory_rounded,
-                      title: 'RAM',
-                      items: availableRAM,
-                      selected: ram,
-                    ),
-                    SizedBox(height: 20.h),
-                    _buildSection(
-                      icon: Icons.storage_rounded,
-                      title: 'Storage',
-                      items: availableSSD,
-                      selected: storage,
-                    ),
-                    SizedBox(height: 20.h),
                     _buildPriceSection(),
                   ],
                 ),
@@ -418,7 +628,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     flex: 2,
                     child: ElevatedButton(
                       onPressed: () {
-                        widget.onApply(brands, ram, storage, min, max);
+                        widget.onApply(min, max);
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
@@ -474,124 +684,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     );
   }
 
-  Widget _buildSection({
-    required IconData icon,
-    required String title,
-    required List<String> items,
-    required Set<String> selected,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(
-          color: AppColors.borderLight,
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(8.w),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12.r),
-                ),
-                child: Icon(
-                  icon,
-                  size: 20.sp,
-                  color: AppColors.primary,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Text(
-                title,
-                style: GoogleFonts.poppins(
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          Wrap(
-            spacing: 10.w,
-            runSpacing: 10.h,
-            children: items.map((item) {
-              final isSelected = selected.contains(item);
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    if (isSelected) {
-                      selected.remove(item);
-                    } else {
-                      selected.add(item);
-                    }
-                  });
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 10.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.accent
-                        : AppColors.background,
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.accent
-                          : AppColors.border,
-                      width: isSelected ? 0 : 1.5,
-                    ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: AppColors.accent.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        item,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: isSelected
-                              ? Colors.white
-                              : AppColors.textPrimary,
-                        ),
-                      ),
-                      if (isSelected) ...[
-                        SizedBox(width: 6.w),
-                        Icon(
-                          Icons.check_circle_rounded,
-                          size: 16.sp,
-                          color: Colors.white,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
-  }
   Widget _buildPriceSection() {
     return Container(
       padding: EdgeInsets.all(20.w),

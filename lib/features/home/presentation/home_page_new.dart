@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../widget/best_deal_slider.dart';
 import '../../../widget/new_arrival_slider.dart';
 import '../providers/home_provider.dart';
+import 'best_deal_list_page.dart';
 import 'new_arrivals_list_page.dart';
 import 'package:bytebox/widget/banner_widget.dart';
 
@@ -149,7 +150,7 @@ class HomePage extends ConsumerWidget {
             ),
             SizedBox(height: 16.h),
             // Search Bar
-            Container(
+  /*          Container(
               decoration: BoxDecoration(
                 color: AppColors.backgroundLight,
                 borderRadius: BorderRadius.circular(16.r),
@@ -186,7 +187,7 @@ class HomePage extends ConsumerWidget {
                   ),
                 ),
               ),
-            ),
+            ),*/
           ],
         ),
       ),
@@ -239,12 +240,14 @@ class HomePage extends ConsumerWidget {
               title: 'Best Deals',
               subtitle: 'Special offers just for you',
               icon: Icons.local_offer_rounded,
-              onTap: () => {}/*Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const BestDealsPage(),
+              onTap: () => {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BestDealListPage(),
+                  ),
                 ),
-              ),*/
+              }
             ),
           ),
           SizedBox(height: 16.h),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../model/NewArrivalModel.dart';
@@ -718,7 +720,7 @@ class ProductDetailPage extends ConsumerWidget {
               ),
               SizedBox(width: 8.w),
               Text(
-                "${averageRating.toStringAsFixed(1)}",
+                averageRating.toStringAsFixed(1),
                 style: GoogleFonts.poppins(
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
@@ -766,7 +768,9 @@ class ProductDetailPage extends ConsumerWidget {
             children: [
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    callSeller('7878934042');
+                  },
                   icon: Icon(Icons.message, size: 20),
                   label: Text(
                     "Contact Seller",
@@ -793,12 +797,17 @@ class ProductDetailPage extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: IconButton(
-                  onPressed: () {},
-                  icon: Icon(Icons.monitor_heart, size: 24),
-                  color: Colors.grey[700],
+                  onPressed: () {
+                    shareProductOnWhatsApp(product);
+                  },
+                  icon: SvgPicture.asset(
+                    'icon/whatsup_icon.svg',
+                    width: 24.w,
+                    height: 24.w,
+                  ),
                   padding: EdgeInsets.all(16.w),
                 ),
-              ),
+              )
             ],
           ),
           SizedBox(height: 16.h),
@@ -843,6 +852,38 @@ class ProductDetailPage extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> shareProductOnWhatsApp(NewArrivalModel product) async {
+    final productUrl = 'https://yourdomain.com/product/${product.id}';
+    final message = '''
+🔥 ${product.name}
+💰 Price: ₹${NumberFormat('#,###').format(product.price)}$productUrl''';
+    final Uri whatsappUri = Uri.parse(
+      'https://wa.me/?text=${Uri.encodeComponent(message)}',
+    );
+
+    if (await canLaunchUrl(whatsappUri)) {
+      await launchUrl(
+        whatsappUri,
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      throw 'Could not open WhatsApp';
+    }
+  }
+  Future<void> callSeller(String phoneNumber) async {
+    final Uri callUri = Uri.parse('tel:$phoneNumber');
+
+    if (await canLaunchUrl(callUri)) {
+      await launchUrl(
+        callUri,
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      throw 'Could not launch dialer';
+    }
+  }
+
 
   /// ---------------- TABS ----------------
   Widget _tabs(BuildContext context, NewArrivalModel product) {
