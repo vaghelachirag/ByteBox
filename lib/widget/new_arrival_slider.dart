@@ -79,8 +79,6 @@ class NewArrivalSlider extends ConsumerWidget {
           );
         }
 
-        // Calculate height based on card content:
-        // Image (160) + Padding (12*2) + Name (20) + Overview (16) + Price (20) + Button (40) + Spacing (30) ≈ 308
         final calculatedHeight = 160.h + // Image height
             24.h + // Top and bottom padding
             20.h + // Name text

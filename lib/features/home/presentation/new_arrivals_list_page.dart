@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../model/NewArrivalModel.dart';
 import '../../../widget/product_card.dart';
+import '../../../widget/app_header.dart';
 
 /// ------------------------------------------------------------
 /// FILTER OPTIONS
@@ -93,30 +94,29 @@ class _NewArrivalsPageState extends State<NewArrivalsPage> {
     final screenWidth = size.width;
     final screenHeight = size.height;
 
-    // Calculate card dimensions based on device size
-    final horizontalPadding = 16.w * 2; // Left + Right padding
-    final crossAxisSpacing = 16.w; // Spacing between columns
+    final horizontalPadding = 16.w * 2;
+    final crossAxisSpacing = 16.w;
     final availableWidth = screenWidth - horizontalPadding - crossAxisSpacing;
-    final cardWidth = availableWidth / 2; // 2 columns
+    final cardWidth = availableWidth / 2;
 
-    // Calculate card height based on width (maintain aspect ratio) or screen height
-    // ProductCard has image (flex 5) and details (flex 4) sections with padding
-    // Using a taller aspect ratio to accommodate all content without overflow
-    // Added 10.h buffer to prevent RenderFlex overflow errors
     final cardHeight = ((cardWidth / 0.65) + 10.h).clamp(
-      cardWidth * 1.5, // Minimum height (1.5:1 aspect ratio) - increased to prevent overflow
-      screenHeight * 0.5, // Maximum height (50% of screen height)
+      cardWidth * 1.5,
+      screenHeight * 0.5,
     );
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        title: const Text('New Arrivals'),
+      appBar: AppHeader(
+        title: 'New Arrivals',
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list_rounded),
+            icon: Icon(
+              Icons.filter_list_rounded,
+              color: Colors.white,
+              size: 24.sp,
+            ),
             onPressed: _openFilterSheet,
-          )
+          ),
         ],
       ),
       body: Column(
@@ -211,6 +211,16 @@ class FilterBottomSheet extends StatefulWidget {
 }
 
 class _FilterBottomSheetState extends State<FilterBottomSheet> {
+  // Byte Box inspired palette
+  static const Color _bg = Color(0xFF050914);
+  static const Color _panel = Color(0xFF0C1324);
+  static const Color _panelAlt = Color(0xFF111B33);
+  static const Color _accent = Color(0xFF0BA8FF);
+  static const Color _accentGlow = Color(0xFF2DD3FF);
+  static const Color _border = Color(0x332DD3FF);
+  static const Color _textPrimary = Colors.white;
+  static const Color _textSecondary = Color(0xFF9FB4D6);
+
   late Set<String> brands;
   late Set<String> ram;
   late Set<String> storage;
@@ -242,17 +252,26 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       child: Container(
         height: MediaQuery.of(context).size.height * 0.85,
         decoration: BoxDecoration(
-          color: AppColors.background,
+          gradient: const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF070E1D),
+              _bg,
+            ],
+          ),
           borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
+              color: _accent.withOpacity(0.25),
+              blurRadius: 30,
+              spreadRadius: 4,
+              offset: const Offset(0, -6),
             ),
           ],
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Drag Handle
             Container(
@@ -260,54 +279,57 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               height: 5.h,
               width: 48.w,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: Colors.white24,
                 borderRadius: BorderRadius.circular(10.r),
               ),
             ),
             // Header
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20.w),
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.tune_rounded,
-                        color: AppColors.primary,
-                        size: 24.sp,
-                      ),
-                      SizedBox(width: 8.w),
-                      Text(
-                        'Filters',
-                        style: GoogleFonts.poppins(
-                          fontSize: 22.sp,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                  Flexible(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.tune_rounded,
+                          color: _accent,
+                          size: 24.sp,
                         ),
-                      ),
-                      if (_activeFilterCount > 0) ...[
                         SizedBox(width: 8.w),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 4.h,
+                        Text(
+                          'Filters',
+                          style: GoogleFonts.poppins(
+                            fontSize: 22.sp,
+                            fontWeight: FontWeight.w700,
+                            color: _textPrimary,
                           ),
-                          decoration: BoxDecoration(
-                            color: AppColors.accent,
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                          child: Text(
-                            '$_activeFilterCount',
-                            style: GoogleFonts.poppins(
-                              fontSize: 12.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                        ),
+                        if (_activeFilterCount > 0) ...[
+                          SizedBox(width: 8.w),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 8.w,
+                              vertical: 4.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _accent,
+                              borderRadius: BorderRadius.circular(12.r),
+                            ),
+                            child: Text(
+                              '$_activeFilterCount',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w600,
+                                color: _textPrimary,
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                   TextButton.icon(
                     onPressed: () {
@@ -322,31 +344,31 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     icon: Icon(
                       Icons.refresh_rounded,
                       size: 18.sp,
-                      color: AppColors.textSecondary,
+                      color: _textSecondary,
                     ),
                     label: Text(
                       'Clear All',
                       style: GoogleFonts.poppins(
                         fontSize: 14.sp,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
+                        color: _textSecondary,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            SizedBox(height: 8.h),
             Divider(
               height: 1,
               thickness: 1,
-              color: AppColors.borderLight,
+              color: Colors.white10,
             ),
             // Content
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(20.w),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildSection(
@@ -379,12 +401,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             Container(
               padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: _panel,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
+                    color: _accent.withOpacity(0.15),
+                    blurRadius: 18,
+                    offset: const Offset(0, -3),
                   ),
                 ],
               ),
@@ -396,19 +418,21 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 16.h),
                         side: BorderSide(
-                          color: AppColors.border,
-                          width: 1.5,
+                          color: _accent,
+                          width: 1.2,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16.r),
                         ),
+                        foregroundColor: _accent,
+                        backgroundColor: Colors.transparent,
                       ),
                       child: Text(
                         'Cancel',
                         style: GoogleFonts.poppins(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
+                          color: _textSecondary,
                         ),
                       ),
                     ),
@@ -422,46 +446,72 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accent,
                         padding: EdgeInsets.symmetric(vertical: 16.h),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16.r),
                         ),
+                        backgroundColor: Colors.transparent,
+                        shadowColor: _accentGlow.withOpacity(0.45),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Apply Filters',
-                            style: GoogleFonts.poppins(
-                              fontSize: 16.sp,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [_accent, _accentGlow],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
                           ),
-                          if (_activeFilterCount > 0) ...[
-                            SizedBox(width: 8.w),
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 6.w,
-                                vertical: 2.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              child: Text(
-                                '$_activeFilterCount',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12.sp,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
+                          borderRadius: BorderRadius.circular(16.r),
+                          boxShadow: [
+                            BoxShadow(
+                              color: _accentGlow.withOpacity(0.45),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
                             ),
                           ],
-                        ],
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          vertical: 14.h,
+                          horizontal: 12.w,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                'Apply Filters',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.w600,
+                                  color: _textPrimary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (_activeFilterCount > 0) ...[
+                              SizedBox(width: 8.w),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 6.w,
+                                  vertical: 2.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                child: Text(
+                                  '$_activeFilterCount',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.w600,
+                                    color: _textPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -483,12 +533,26 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _panel,
+            _panelAlt,
+          ],
+        ),
         borderRadius: BorderRadius.circular(20.r),
         border: Border.all(
-          color: AppColors.borderLight,
-          width: 1,
+          color: _border,
+          width: 1.2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.35),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -498,13 +562,13 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: _accent.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Icon(
                   icon,
                   size: 20.sp,
-                  color: AppColors.primary,
+                  color: _accent,
                 ),
               ),
               SizedBox(width: 12.w),
@@ -513,7 +577,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 style: GoogleFonts.poppins(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: _textPrimary,
                 ),
               ),
             ],
@@ -542,21 +606,19 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   ),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.accent
-                        : AppColors.background,
+                        ? _accent
+                        : Colors.white.withOpacity(0.02),
                     borderRadius: BorderRadius.circular(12.r),
                     border: Border.all(
-                      color: isSelected
-                          ? AppColors.accent
-                          : AppColors.border,
-                      width: isSelected ? 0 : 1.5,
+                      color: isSelected ? Colors.transparent : _border,
+                      width: 1.2,
                     ),
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: AppColors.accent.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
+                              color: _accentGlow.withOpacity(0.4),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
                             ),
                           ]
                         : null,
@@ -570,8 +632,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                           fontSize: 14.sp,
                           fontWeight: FontWeight.w600,
                           color: isSelected
-                              ? Colors.white
-                              : AppColors.textPrimary,
+                              ? _textPrimary
+                              : _textSecondary,
                         ),
                       ),
                       if (isSelected) ...[
@@ -579,7 +641,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         Icon(
                           Icons.check_circle_rounded,
                           size: 16.sp,
-                          color: Colors.white,
+                          color: _textPrimary,
                         ),
                       ],
                     ],
@@ -596,12 +658,26 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            _panel,
+            _panelAlt,
+          ],
+        ),
         borderRadius: BorderRadius.circular(20.r),
         border: Border.all(
-          color: AppColors.borderLight,
-          width: 1,
+          color: _border,
+          width: 1.2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.35),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -611,13 +687,13 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               Container(
                 padding: EdgeInsets.all(8.w),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
+                  color: _accent.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Icon(
                   Icons.currency_rupee_rounded,
                   size: 20.sp,
-                  color: AppColors.primary,
+                  color: _accent,
                 ),
               ),
               SizedBox(width: 12.w),
@@ -626,7 +702,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 style: GoogleFonts.poppins(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: _textPrimary,
                 ),
               ),
             ],
@@ -641,11 +717,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   vertical: 12.h,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.background,
+                  color: Colors.white.withOpacity(0.03),
                   borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(
-                    color: AppColors.border,
-                    width: 1.5,
+                    color: _border,
+                    width: 1.2,
                   ),
                 ),
                 child: Column(
@@ -655,7 +731,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       'Min Price',
                       style: GoogleFonts.poppins(
                         fontSize: 11.sp,
-                        color: AppColors.textSecondary,
+                        color: _textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -665,7 +741,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       style: GoogleFonts.poppins(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        color: _textPrimary,
                       ),
                     ),
                   ],
@@ -677,11 +753,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   vertical: 12.h,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.background,
+                  color: Colors.white.withOpacity(0.03),
                   borderRadius: BorderRadius.circular(12.r),
                   border: Border.all(
-                    color: AppColors.border,
-                    width: 1.5,
+                    color: _border,
+                    width: 1.2,
                   ),
                 ),
                 child: Column(
@@ -691,7 +767,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       'Max Price',
                       style: GoogleFonts.poppins(
                         fontSize: 11.sp,
-                        color: AppColors.textSecondary,
+                        color: _textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -701,7 +777,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       style: GoogleFonts.poppins(
                         fontSize: 16.sp,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        color: _textPrimary,
                       ),
                     ),
                   ],
@@ -710,19 +786,35 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             ],
           ),
           SizedBox(height: 20.h),
-          RangeSlider(
-            values: RangeValues(min, max),
-            min: 0,
-            max: 200000,
-            divisions: 200,
-            activeColor: AppColors.accent,
-            inactiveColor: AppColors.border,
-            onChanged: (values) {
-              setState(() {
-                min = values.start;
-                max = values.end;
-              });
-            },
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: _accent,
+              inactiveTrackColor: Colors.white24,
+              thumbColor: _accentGlow,
+              overlayColor: _accentGlow.withOpacity(0.2),
+              trackHeight: 4,
+              valueIndicatorColor: _accent,
+              valueIndicatorTextStyle: GoogleFonts.poppins(
+                color: _textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            child: RangeSlider(
+              values: RangeValues(min, max),
+              min: 0,
+              max: 200000,
+              divisions: 200,
+              labels: RangeLabels(
+                '₹${NumberFormat.compact().format(min.toInt())}',
+                '₹${NumberFormat.compact().format(max.toInt())}',
+              ),
+              onChanged: (values) {
+                setState(() {
+                  min = values.start;
+                  max = values.end;
+                });
+              },
+            ),
           ),
         ],
       ),

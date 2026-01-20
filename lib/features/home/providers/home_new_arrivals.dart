@@ -5,7 +5,7 @@ import '../../../model/NewArrivalModel.dart';
 
 final newArrivalProvider =
 StreamProvider<List<NewArrivalModel>>((ref) {
-  final refDb = FirebaseDatabase.instance.ref('new_arrivals');
+  final refDb = FirebaseDatabase.instance.ref('new_arrivals').orderByChild('createdAt').limitToFirst(10);
 
   return refDb.onValue.map((event) {
     final data = event.snapshot.value;

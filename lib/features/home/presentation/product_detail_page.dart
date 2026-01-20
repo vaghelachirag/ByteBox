@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../model/NewArrivalModel.dart';
+import '../../../widget/app_header.dart';
 
 /// ---------------- FULL SCREEN IMAGE VIEWER ----------------
 class FullScreenImageViewer extends StatefulWidget {
@@ -442,17 +443,9 @@ class ProductDetailPage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        title: Text(
-          product.name,
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            fontSize: 16.sp,
-          ),
-        ),
-        iconTheme: IconThemeData(color: Colors.grey[800]),
+      appBar: AppHeader(
+        title: product.name,
+        showLogo: false,
       ),
       body: SingleChildScrollView(
         child: Column(

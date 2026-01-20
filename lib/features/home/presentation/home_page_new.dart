@@ -47,149 +47,211 @@ class HomePage extends ConsumerWidget {
         ),
       ),
     );
-
   }
 
-  // ---------------- HEADER ----------------
   Widget _buildHeader(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.background,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.black,
+            const Color(0xFF0A0A1A),
+            Colors.black,
+          ],
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: const Color(0xFF00B4FF).withOpacity(0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                // Logo/Brand Section
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'RefurbLaptops',
-                        style: GoogleFonts.poppins(
-                          fontSize: 24.sp,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      SizedBox(height: 2.h),
-                      Text(
-                        'Quality Refurbished Laptops',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.sp,
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
+      child: Stack(
+        children: [
+          // Blue light streak effect
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              height: 2,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.transparent,
+                    const Color(0xFF00B4FF).withOpacity(0.4),
+                    const Color(0xFF0066FF).withOpacity(0.6),
+                    const Color(0xFF00B4FF).withOpacity(0.4),
+                    Colors.transparent,
+                  ],
                 ),
-                // Cart Icon with Badge
-                Stack(
-                  clipBehavior: Clip.none,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00B4FF).withOpacity(0.5),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+            child: Column(
+              children: [
+                Row(
                   children: [
+                    // Logo/Brand Section
+                    Expanded(
+                      child: Row(
+                        children: [
+                          // Logo Image
+                          Image.asset(
+                            'assets/splash_logo.png',
+                            height: 45.h,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: 45.w,
+                                height: 45.w,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      const Color(0xFF0066FF),
+                                      const Color(0xFF00B4FF),
+                                      Colors.grey[300]!,
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                child: Icon(
+                                  Icons.abc,
+                                  color: Colors.white,
+                                  size: 24.sp,
+                                ),
+                              );
+                            },
+                          ),
+                          SizedBox(width: 12.w),
+                          // Brand Text
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'BYTE BOX',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 20.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    letterSpacing: 1.5,
+                                    shadows: [
+                                      Shadow(
+                                        color: const Color(0xFF00B4FF).withOpacity(0.5),
+                                        blurRadius: 8,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                SizedBox(height: 2.h),
+                                Text(
+                                  'Smart Tech. Smart Price.',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 10.sp,
+                                    color: Colors.white70,
+                                    letterSpacing: 0.5,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
+                    // Cart Icon with Badge
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFF00B4FF).withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          padding: EdgeInsets.all(10.w),
+                          child: Icon(
+                            Icons.shopping_cart_outlined,
+                            color: Colors.white,
+                            size: 22.sp,
+                          ),
+                        ),
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            padding: EdgeInsets.all(4.w),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  const Color(0xFFFF6B35),
+                                  const Color(0xFFFF8C66),
+                                ],
+                              ),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFFF6B35).withOpacity(0.5),
+                                  blurRadius: 6,
+                                ),
+                              ],
+                            ),
+                            child: Text(
+                              '0',
+                              style: GoogleFonts.poppins(
+                                fontSize: 10.sp,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(width: 12.w),
+                    // Notification Icon
                     Container(
                       decoration: BoxDecoration(
-                        color: AppColors.backgroundLight,
+                        color: Colors.white.withOpacity(0.1),
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFF00B4FF).withOpacity(0.3),
+                          width: 1,
+                        ),
                       ),
                       padding: EdgeInsets.all(10.w),
                       child: Icon(
-                        Icons.shopping_cart_outlined,
-                        color: AppColors.textPrimary,
+                        Icons.notifications_outlined,
+                        color: Colors.white,
                         size: 22.sp,
-                      ),
-                    ),
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: Container(
-                        padding: EdgeInsets.all(4.w),
-                        decoration: const BoxDecoration(
-                          color: AppColors.accent,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          '0',
-                          style: GoogleFonts.poppins(
-                            fontSize: 10.sp,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(width: 12.w),
-                // Notification Icon
-                Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.backgroundLight,
-                    shape: BoxShape.circle,
-                  ),
-                  padding: EdgeInsets.all(10.w),
-                  child: Icon(
-                    Icons.notifications_outlined,
-                    color: AppColors.textPrimary,
-                    size: 22.sp,
-                  ),
-                ),
+                SizedBox(height: 16.h)
               ],
             ),
-            SizedBox(height: 16.h),
-            // Search Bar
-  /*          Container(
-              decoration: BoxDecoration(
-                color: AppColors.backgroundLight,
-                borderRadius: BorderRadius.circular(16.r),
-                border: Border.all(color: AppColors.border, width: 1),
-              ),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search laptops, brands, models...',
-                  hintStyle: GoogleFonts.poppins(
-                    fontSize: 14.sp,
-                    color: AppColors.textTertiary,
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: AppColors.textSecondary,
-                    size: 22.sp,
-                  ),
-                  suffixIcon: Container(
-                    margin: EdgeInsets.all(6.w),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    child: Icon(
-                      Icons.tune,
-                      color: Colors.white,
-                      size: 18.sp,
-                    ),
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 14.h,
-                  ),
-                ),
-              ),
-            ),*/
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

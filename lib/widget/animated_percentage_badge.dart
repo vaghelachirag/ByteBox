@@ -80,8 +80,8 @@ class _AnimatedPercentageBadgeState extends State<AnimatedPercentageBadge>
                   _slide.value.dy * 20,
                 ),
                 child: Container(
-                  width: 60.w,
-                  height: 60.w,
+                  width: 40.w,
+                  height: 40.w,
                   decoration: BoxDecoration(
                     color: const Color(0xFFFF6B35), // Orange color matching the image
                     shape: BoxShape.circle,
@@ -105,7 +105,7 @@ class _AnimatedPercentageBadgeState extends State<AnimatedPercentageBadge>
                         "${widget.discount.toInt()}%",
                         style: GoogleFonts.poppins(
                           color: Colors.white,
-                          fontSize: 18.sp,
+                          fontSize: 12.sp,
                           fontWeight: FontWeight.bold,
                           letterSpacing: -0.5,
                           height: 1.0,

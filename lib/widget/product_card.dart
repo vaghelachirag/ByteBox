@@ -214,35 +214,7 @@ class ProductCard extends StatelessWidget {
                               color: AppColors.error,
                             ),
                           ),
-                        ),
-
-                        // Add Button
-                        SizedBox(
-                          height: 32.h,
-                          child: FilledButton(
-                            onPressed: () {},
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.accent,
-                              foregroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12.w,
-                                vertical: 0,
-                              ),
-                              minimumSize: Size(0, 32.h),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: Text(
-                              'Add',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11.sp,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
+                        )
                       ],
                     ),
                   ],

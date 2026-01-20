@@ -1,5 +1,6 @@
 import 'package:bytebox/features/home/admin/admin_home.dart';
 import 'package:bytebox/features/home/presentation/home_page_new.dart';
+import 'package:bytebox/features/splash/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -114,7 +115,7 @@ class MyApp extends StatelessWidget {
           home: child,
         );
       },
-      child:  HomePage(),
+      child: const SplashScreen(),
     );
   }
 }
