@@ -7,7 +7,7 @@ StreamProvider.autoDispose<List<BestDealModel>>((ref) {
   final query = FirebaseFirestore.instance
       .collection('best_deals')
       .where('isActive', isEqualTo: true)
-      .orderBy('order');
+      .orderBy('discountPercent', descending: true);
 
   return query.snapshots().map((snapshot) {
     final List<BestDealModel> items = [];

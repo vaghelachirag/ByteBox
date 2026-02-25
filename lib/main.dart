@@ -115,7 +115,7 @@ class MyApp extends StatelessWidget {
           home: child,
         );
       },
-      child: const AdminHomePage(),
+      child: const SplashScreen(),
     );
   }
 }

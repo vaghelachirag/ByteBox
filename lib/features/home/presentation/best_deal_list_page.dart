@@ -130,7 +130,7 @@ class _BestDealListPageState extends State<BestDealListPage> {
             child: StreamBuilder<QuerySnapshot>(
               stream: _dbRef
                   .where('isActive', isEqualTo: true)
-                  .orderBy('createdAt', descending: true)
+                  .orderBy('discountPercent', descending: true)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {

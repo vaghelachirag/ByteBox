@@ -19,32 +19,58 @@ class HomePage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      body: SafeArea(
-        bottom: false,
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(child: _buildHeader(context)),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.only(bottom: 24.h),
-                child: SizedBox(height: 200.h, child: const BannerSlider()),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isTablet = constraints.maxWidth >= 600;
+          final isDesktop = constraints.maxWidth >= 1024;
+          final bannerHeight = isDesktop
+              ? 320.h
+              : isTablet
+                  ? 260.h
+                  : 200.h;
+
+          final maxContentWidth = isDesktop ? 1200.0 : constraints.maxWidth;
+
+          return SafeArea(
+            bottom: false,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxContentWidth),
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    SliverToBoxAdapter(child: _buildHeader(context)),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.only(bottom: 24.h),
+                        child:
+                            SizedBox(height: bannerHeight, child: const BannerSlider()),
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: _buildCategoryStrip(),
+                    ),
+                    SliverToBoxAdapter(
+                      child: _buildFeaturedCategoriesGrid(),
+                    ),
+                    SliverToBoxAdapter(
+                      child: _buildServiceHighlights(),
+                    ),
+                    SliverToBoxAdapter(
+                      child: _buildNewArrivalsSection(context, homeState),
+                    ),
+                    SliverToBoxAdapter(
+                      child: _buildBestDealsSection(context, homeState),
+                    ),
+                    SliverToBoxAdapter(
+                      child: SizedBox(height: 24.h),
+                    ),
+                  ],
+                ),
               ),
             ),
-            SliverToBoxAdapter(
-              child: _buildServiceHighlights(),
-            ),
-            SliverToBoxAdapter(
-              child: _buildNewArrivalsSection(context, homeState),
-            ),
-            SliverToBoxAdapter(
-              child: _buildBestDealsSection(context, homeState),
-            ),
-            SliverToBoxAdapter(
-              child: SizedBox(height: 24.h),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -432,8 +458,8 @@ class HomePage extends ConsumerWidget {
               Expanded(
                 child: _ServiceItem(
                   icon: Icons.local_shipping_rounded,
-                  title: 'Free Shipping',
-                  subtitle: 'All Orders',
+                  title: 'Free Delivery',
+                  subtitle: 'On select locations',
                   gradient: [AppColors.primary, AppColors.primaryLight],
                 ),
               ),
@@ -441,8 +467,8 @@ class HomePage extends ConsumerWidget {
               Expanded(
                 child: _ServiceItem(
                   icon: Icons.verified_user_rounded,
-                  title: 'Warranty',
-                  subtitle: '1 Year',
+                  title: 'Warranty Covered',
+                  subtitle: 'Up to 1 Year',
                   gradient: [AppColors.success, const Color(0xFF34D399)],
                 ),
               ),
@@ -450,12 +476,128 @@ class HomePage extends ConsumerWidget {
               Expanded(
                 child: _ServiceItem(
                   icon: Icons.support_agent_rounded,
-                  title: 'Support',
-                  subtitle: '24/7',
+                  title: 'Expert Support',
+                  subtitle: 'Store & online',
                   gradient: [AppColors.accent, AppColors.accentLight],
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------- CATEGORY STRIP ----------------
+  Widget _buildCategoryStrip() {
+    final categories = [
+      _CategoryData(
+        icon: Icons.laptop_mac_rounded,
+        label: 'Laptops',
+      ),
+      _CategoryData(
+        icon: Icons.security_rounded,
+        label: 'AMC / Service',
+      ),
+      _CategoryData(
+        icon: Icons.computer_rounded,
+        label: 'Desktops',
+      ),
+      _CategoryData(
+        icon: Icons.desktop_windows_rounded,
+        label: 'Monitors',
+      ),
+      _CategoryData(
+        icon: Icons.videogame_asset_rounded,
+        label: 'Gaming',
+      ),
+      _CategoryData(
+        icon: Icons.headphones_rounded,
+        label: 'Accessories',
+      ),
+      _CategoryData(
+        icon: Icons.desktop_windows_rounded,
+        label: 'Computer on Rent',
+      ),
+    ];
+
+    return Container(
+      padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 16.h, bottom: 8.h),
+      color: Colors.white,
+      child: SizedBox(
+        height: 80.h,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          itemCount: categories.length,
+          separatorBuilder: (_, __) => SizedBox(width: 12.w),
+          itemBuilder: (context, index) {
+            final item = categories[index];
+            return _CategoryChip(data: item);
+          },
+        ),
+      ),
+    );
+  }
+
+  // ---------------- FEATURED CATEGORIES GRID ----------------
+  Widget _buildFeaturedCategoriesGrid() {
+    final tiles = [
+      _CategoryTileData(
+        title: 'Shop Laptops',
+        subtitle: 'Business • Student • Gaming',
+        icon: Icons.laptop_chromebook_rounded,
+        color: const Color(0xFF1D4ED8),
+      ),
+      _CategoryTileData(
+        title: 'Exchange & Upgrade',
+        subtitle: 'Upgrade your old laptop',
+        icon: Icons.swap_horiz_rounded,
+        color: const Color(0xFF059669),
+      ),
+      _CategoryTileData(
+        title: 'Accessories',
+        subtitle: 'Bags • Mouse • Keyboards',
+        icon: Icons.headphones_rounded,
+        color: const Color(0xFF7C3AED),
+      ),
+      _CategoryTileData(
+        title: 'Store Locator',
+        subtitle: 'Find nearby stores',
+        icon: Icons.location_on_rounded,
+        color: const Color(0xFFEA580C),
+      ),
+    ];
+
+    return Container(
+      color: Colors.white,
+      padding: EdgeInsets.fromLTRB(16.w, 8.h, 16.w, 24.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Explore by category',
+            style: GoogleFonts.poppins(
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: 12.h),
+          GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            shrinkWrap: true,
+            itemCount: tiles.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 10.w,
+              mainAxisSpacing: 10.h,
+              childAspectRatio: 1.7,
+            ),
+            itemBuilder: (context, index) {
+              final tile = tiles[index];
+              return _FeaturedCategoryTile(data: tile);
+            },
           ),
         ],
       ),
@@ -538,6 +680,144 @@ class _ServiceItem extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryData {
+  final IconData icon;
+  final String label;
+
+  _CategoryData({
+    required this.icon,
+    required this.label,
+  });
+}
+
+class _CategoryChip extends StatelessWidget {
+  final _CategoryData data;
+
+  const _CategoryChip({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(24.r),
+        border: Border.all(
+          color: Colors.grey[300]!,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            data.icon,
+            color: AppColors.primary,
+            size: 18.sp,
+          ),
+          SizedBox(width: 8.w),
+          Text(
+            data.label,
+            style: GoogleFonts.poppins(
+              fontSize: 11.sp,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryTileData {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+
+  _CategoryTileData({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+  });
+}
+
+class _FeaturedCategoryTile extends StatelessWidget {
+  final _CategoryTileData data;
+
+  const _FeaturedCategoryTile({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            data.color.withOpacity(0.12),
+            data.color.withOpacity(0.03),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(
+          color: data.color.withOpacity(0.35),
+          width: 1,
+        ),
+      ),
+      padding: EdgeInsets.all(10.w),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8.w),
+            decoration: BoxDecoration(
+              color: data.color.withOpacity(0.9),
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            child: Icon(
+              data.icon,
+              color: Colors.white,
+              size: 18.sp,
+            ),
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  data.title,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.sp,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  data.subtitle,
+                  style: GoogleFonts.poppins(
+                    fontSize: 9.sp,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textSecondary,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ],
       ),
