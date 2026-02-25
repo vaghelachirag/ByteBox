@@ -1,5 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -20,7 +20,8 @@ class BestDealListPage extends StatefulWidget {
 }
 
 class _BestDealListPageState extends State<BestDealListPage> {
-  final _dbRef = FirebaseDatabase.instance.ref('best_deals');
+  final _dbRef = FirebaseFirestore.instance.collection('best_deals');
+
 
   String searchQuery = '';
   double minPrice = 0;
@@ -126,8 +127,11 @@ class _BestDealListPageState extends State<BestDealListPage> {
             ),
           ),
           Expanded(
-            child: StreamBuilder<DatabaseEvent>(
-              stream: _dbRef.onValue,
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _dbRef
+                  .where('isActive', isEqualTo: true)
+                  .orderBy('createdAt', descending: true)
+                  .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const _LoadingState();
@@ -137,18 +141,17 @@ class _BestDealListPageState extends State<BestDealListPage> {
                   return _ErrorState(error: snapshot.error.toString());
                 }
 
-                final data = snapshot.data?.snapshot.value;
-                if (data == null) return const _EmptyState();
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const _EmptyState();
+                }
 
-                final map = Map<dynamic, dynamic>.from(data as Map);
                 final products = _applyAll(
-                  map.entries
-                      .map((e) => BestDealModel.fromMap(
-                    e.key,
-                    Map<dynamic, dynamic>.from(e.value),
-                  ))
-                      .where((p) => p.isActive)
-                      .toList(),
+                  snapshot.data!.docs.map((doc) {
+                    return BestDealModel.fromMap(
+                      doc.id,
+                      doc.data() as Map<String, dynamic>,
+                    );
+                  }).toList(),
                 );
 
                 if (products.isEmpty) return const _EmptyState();
@@ -156,10 +159,10 @@ class _BestDealListPageState extends State<BestDealListPage> {
                 return GridView.builder(
                   padding: EdgeInsets.all(16.w),
                   gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 220, // card width
+                    maxCrossAxisExtent: 220,
                     mainAxisSpacing: 16.h,
                     crossAxisSpacing: 16.w,
-                    childAspectRatio: 0.72, // balanced, not strict
+                    childAspectRatio: 0.72,
                   ),
                   itemCount: products.length,
                   itemBuilder: (_, i) => GestureDetector(

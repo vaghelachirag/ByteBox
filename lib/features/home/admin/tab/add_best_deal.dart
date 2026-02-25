@@ -1,4 +1,4 @@
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -10,8 +10,8 @@ class AddBestDealScreen extends StatefulWidget {
 }
 
 class _AddBestDealScreenState extends State<AddBestDealScreen> {
-  final DatabaseReference bestDealRef =
-  FirebaseDatabase.instance.ref("best_deals");
+  final CollectionReference bestDealRef =
+  FirebaseFirestore.instance.collection("best_deals");
 
   // ---------- CONTROLLERS ----------
   final TextEditingController nameController = TextEditingController();
@@ -99,7 +99,7 @@ class _AddBestDealScreenState extends State<AddBestDealScreen> {
         .where((url) => url.isNotEmpty)
         .toList();
 
-    await bestDealRef.push().set({
+    await bestDealRef.add({
       "name": nameController.text.trim(),
       "originalPrice": originalPrice,
       "discountPrice": discountPrice,
@@ -107,7 +107,6 @@ class _AddBestDealScreenState extends State<AddBestDealScreen> {
       "overview": overviewController.text.trim(),
       "model": modelController.text.trim(),
       "processor": processorController.text.trim(),
-
       "company": company,
       "ram": ram,
       "storage": storage,
@@ -119,7 +118,9 @@ class _AddBestDealScreenState extends State<AddBestDealScreen> {
 
       "images": images,
       "isActive": true,
-      "createdAt": DateTime.now().millisecondsSinceEpoch,
+
+      // 🔥 Firestore way
+      "createdAt": FieldValue.serverTimestamp(),
     });
 
     // Clear fields
@@ -134,6 +135,7 @@ class _AddBestDealScreenState extends State<AddBestDealScreen> {
 
     setState(() {});
   }
+
 
   // ---------- UI ----------
   @override

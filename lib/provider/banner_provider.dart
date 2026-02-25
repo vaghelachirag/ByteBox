@@ -1,25 +1,31 @@
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../model/BannerModel.dart';
 
-final bannerProvider = StreamProvider<List<BannerModel>>((ref) {
-  final refDb = FirebaseDatabase.instance.ref().child('banners');
+final bannerProvider =
+StreamProvider<List<BannerModel>>((ref) {
+  ref.keepAlive();
 
-  return refDb.onValue.map((event) {
-    final data = event.snapshot.value;
-    if (data == null) return [];
+  final query = FirebaseFirestore.instance
+      .collection('banners')
+      .where('isActive', isEqualTo: true)
+      .orderBy('order', descending: false);
 
-    final Map<dynamic, dynamic> map = data as Map<dynamic, dynamic>;
+  return query.snapshots().map((snapshot) {
+    if (snapshot.docs.isEmpty) {
+      return <BannerModel>[];
+    }
 
-    final banners = map.values
-        .map((e) => BannerModel.fromJson(
-      Map<String, dynamic>.from(e),
-    ))
-        .where((e) => e.isActive)
-        .toList();
+    final List<BannerModel> banners = [];
 
-    banners.sort((a, b) => a.order.compareTo(b.order));
+    for (final doc in snapshot.docs) {
+      try {
+        final banner = BannerModel.fromJson(doc.data());
+        banners.add(banner);
+      } catch (e) {
+        print("Error parsing banner ${doc.id}: $e");
+      }
+    }
 
     return banners;
   });

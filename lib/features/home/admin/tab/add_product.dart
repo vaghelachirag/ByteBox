@@ -1,4 +1,4 @@
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -10,8 +10,9 @@ class AddProductScreen extends StatefulWidget {
 }
 
 class _AddProductScreenState extends State<AddProductScreen> {
-  final DatabaseReference laptopRef =
-  FirebaseDatabase.instance.ref("new_arrivals");
+  final CollectionReference laptopRef =
+  FirebaseFirestore.instance.collection("new_arrivals");
+
 
   // ---------- CONTROLLERS ----------
   final TextEditingController nameController = TextEditingController();
@@ -75,7 +76,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         .where((url) => url.isNotEmpty)
         .toList();
 
-    await laptopRef.push().set({
+    await laptopRef.add({
       "name": nameController.text.trim(),
       "price": price,
       "overview": overviewController.text.trim(),
@@ -93,7 +94,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
       "images": images,
       "isActive": true,
-      "createdAt": DateTime.now().millisecondsSinceEpoch,
+
+      // 🔥 Firestore timestamp
+      "createdAt": FieldValue.serverTimestamp(),
     });
 
     nameController.clear();
@@ -106,14 +109,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
     setState(() {});
   }
 
+
   // ---------- GET LAPTOPS ----------
   Future<List<Map<String, dynamic>>> getLaptops() async {
-    final snapshot = await laptopRef.get();
-    if (!snapshot.exists) return [];
-    final Map<dynamic, dynamic> data =
-    snapshot.value as Map<dynamic, dynamic>;
-    return data.values
-        .map((e) => Map<String, dynamic>.from(e))
+    final snapshot = await laptopRef
+        .orderBy("createdAt", descending: true)
+        .get();
+
+    return snapshot.docs
+        .map((doc) => doc.data() as Map<String, dynamic>)
         .toList();
   }
 

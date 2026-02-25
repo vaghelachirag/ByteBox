@@ -46,9 +46,9 @@ class DefaultFirebaseOptions {
     messagingSenderId: '685282199422',
     projectId: 'bytebox-96b6a',
     authDomain: 'bytebox-96b6a.firebaseapp.com',
+    databaseURL: 'https://bytebox-96b6a-default-rtdb.firebaseio.com',
     storageBucket: 'bytebox-96b6a.firebasestorage.app',
     measurementId: 'G-960BDMRBJZ',
-    databaseURL: "https://deepa-skitchenadmin-default-rtdb.firebaseio.com/",
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -56,8 +56,8 @@ class DefaultFirebaseOptions {
     appId: '1:685282199422:android:7c98b792c1948b2b5cd52f',
     messagingSenderId: '685282199422',
     projectId: 'bytebox-96b6a',
+    databaseURL: 'https://bytebox-96b6a-default-rtdb.firebaseio.com',
     storageBucket: 'bytebox-96b6a.firebasestorage.app',
-    databaseURL: "https://deepa-skitchenadmin-default-rtdb.firebaseio.com/",
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -65,9 +65,9 @@ class DefaultFirebaseOptions {
     appId: '1:685282199422:ios:a95ad3f60314f2be5cd52f',
     messagingSenderId: '685282199422',
     projectId: 'bytebox-96b6a',
+    databaseURL: 'https://bytebox-96b6a-default-rtdb.firebaseio.com',
     storageBucket: 'bytebox-96b6a.firebasestorage.app',
     iosBundleId: 'com.example.bytebox',
-    databaseURL: "https://bytebox-96b6a-default-rtdb.firebaseio.com/",
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -75,9 +75,9 @@ class DefaultFirebaseOptions {
     appId: '1:685282199422:ios:a95ad3f60314f2be5cd52f',
     messagingSenderId: '685282199422',
     projectId: 'bytebox-96b6a',
+    databaseURL: 'https://bytebox-96b6a-default-rtdb.firebaseio.com',
     storageBucket: 'bytebox-96b6a.firebasestorage.app',
     iosBundleId: 'com.example.bytebox',
-    databaseURL: "https://bytebox-96b6a-default-rtdb.firebaseio.com/",
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
@@ -86,9 +86,9 @@ class DefaultFirebaseOptions {
     messagingSenderId: '685282199422',
     projectId: 'bytebox-96b6a',
     authDomain: 'bytebox-96b6a.firebaseapp.com',
+    databaseURL: 'https://bytebox-96b6a-default-rtdb.firebaseio.com',
     storageBucket: 'bytebox-96b6a.firebasestorage.app',
     measurementId: 'G-TXBHW4LZ27',
-    databaseURL: "https://bytebox-96b6a-default-rtdb.firebaseio.com/",
   );
 
 }

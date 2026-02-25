@@ -1,21 +1,35 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_database/firebase_database.dart';import '../model/NewArrivals.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../model/NewArrivals.dart';
 
 final newArrivalProvider =
 StreamProvider<List<NewArrivalModel>>((ref) {
-  final refDb = FirebaseDatabase.instance.ref('new_arrivals');
 
-  return refDb.onValue.map((event) {
-    final data = event.snapshot.value as Map<dynamic, dynamic>?;
+  final query = FirebaseFirestore.instance
+      .collection('new_arrivals')
+      .where('isActive', isEqualTo: true)
+      .orderBy('createdAt', descending: true);
 
-    if (data == null) return [];
+  return query.snapshots().map((snapshot) {
 
-    final list = data.entries
-        .map((e) =>
-        NewArrivalModel.fromJson(e.key, e.value))
-        .where((p) => p.isActive)
-        .toList();
+    if (snapshot.docs.isEmpty) {
+      return <NewArrivalModel>[];
+    }
+
+    final List<NewArrivalModel> list = [];
+
+    for (final doc in snapshot.docs) {
+      try {
+        list.add(
+          NewArrivalModel.fromJson(
+            doc.id,
+            doc.data(),
+          ),
+        );
+      } catch (e) {
+        print("Error parsing new arrival ${doc.id}: $e");
+      }
+    }
 
     return list;
   });

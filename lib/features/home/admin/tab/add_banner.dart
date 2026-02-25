@@ -1,4 +1,4 @@
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class AddBannerScreen extends StatefulWidget {
@@ -9,8 +9,9 @@ class AddBannerScreen extends StatefulWidget {
 }
 
 class _AddBannerScreenState extends State<AddBannerScreen> {
-  final DatabaseReference bannerRef =
-  FirebaseDatabase.instance.ref("banners");
+
+  final CollectionReference bannerRef =
+  FirebaseFirestore.instance.collection("banners");
 
   final TextEditingController titleController = TextEditingController();
   final TextEditingController imageController = TextEditingController();
@@ -18,11 +19,12 @@ class _AddBannerScreenState extends State<AddBannerScreen> {
 
   // ---------- SAVE BANNER ----------
   Future<void> saveBanner() async {
-    await bannerRef.push().set({
+    await bannerRef.add({
       "title": titleController.text,
       "imageUrl": imageController.text,
       "order": int.tryParse(orderController.text) ?? 0,
       "isActive": true,
+      "createdAt": FieldValue.serverTimestamp(),
     });
 
     titleController.clear();
@@ -34,21 +36,13 @@ class _AddBannerScreenState extends State<AddBannerScreen> {
 
   // ---------- GET BANNERS ----------
   Future<List<Map<String, dynamic>>> getBanners() async {
-    final snapshot = await bannerRef.get();
+    final snapshot = await bannerRef
+        .orderBy("order")
+        .get();
 
-    if (!snapshot.exists) return [];
-
-    final Map<dynamic, dynamic> data =
-    snapshot.value as Map<dynamic, dynamic>;
-
-    // Sort by order
-    final banners = data.values
-        .map((e) => Map<String, dynamic>.from(e))
+    return snapshot.docs
+        .map((doc) => doc.data() as Map<String, dynamic>)
         .toList();
-
-    banners.sort((a, b) => (a['order'] ?? 0).compareTo(b['order'] ?? 0));
-
-    return banners;
   }
 
   @override
@@ -62,7 +56,7 @@ class _AddBannerScreenState extends State<AddBannerScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            // -------- INPUT FIELDS --------
+
             TextField(
               controller: titleController,
               decoration: const InputDecoration(
@@ -71,6 +65,7 @@ class _AddBannerScreenState extends State<AddBannerScreen> {
               ),
             ),
             const SizedBox(height: 10),
+
             TextField(
               controller: imageController,
               decoration: const InputDecoration(
@@ -79,6 +74,7 @@ class _AddBannerScreenState extends State<AddBannerScreen> {
               ),
             ),
             const SizedBox(height: 10),
+
             TextField(
               controller: orderController,
               keyboardType: TextInputType.number,
@@ -89,7 +85,6 @@ class _AddBannerScreenState extends State<AddBannerScreen> {
             ),
             const SizedBox(height: 15),
 
-            // -------- SAVE BUTTON --------
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -104,9 +99,9 @@ class _AddBannerScreenState extends State<AddBannerScreen> {
                 ),
               ),
             ),
+
             const SizedBox(height: 20),
 
-            // -------- BANNER LIST --------
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: getBanners(),
@@ -130,15 +125,15 @@ class _AddBannerScreenState extends State<AddBannerScreen> {
                       return Card(
                         child: ListTile(
                           leading: Image.network(
-                            banner['imageUrl'],
+                            banner['imageUrl'] ?? '',
                             width: 60,
                             height: 60,
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) =>
                             const Icon(Icons.image),
                           ),
-                          title: Text(banner['title']),
-                          subtitle: Text("Order: ${banner['order']}"),
+                          title: Text(banner['title'] ?? ''),
+                          subtitle: Text("Order: ${banner['order'] ?? 0}"),
                         ),
                       );
                     },

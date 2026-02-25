@@ -1,4 +1,4 @@
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -10,8 +10,9 @@ class ProductScreen extends StatefulWidget {
 }
 
 class _ProductScreenState extends State<ProductScreen> {
-  final DatabaseReference productRef =
-  FirebaseDatabase.instance.ref("products");
+  final CollectionReference productRef =
+  FirebaseFirestore.instance.collection("products");
+
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController priceController = TextEditingController();
@@ -19,11 +20,12 @@ class _ProductScreenState extends State<ProductScreen> {
 
   // ---------- SAVE PRODUCT ----------
   Future<void> saveProduct() async {
-    await productRef.push().set({
+    await productRef.add({
       "name": nameController.text,
       "price": int.tryParse(priceController.text) ?? 0,
       "imageUrl": imageController.text,
       "isActive": true,
+      "createdAt": FieldValue.serverTimestamp(),
     });
 
     nameController.clear();
@@ -35,16 +37,17 @@ class _ProductScreenState extends State<ProductScreen> {
 
   // ---------- GET PRODUCTS ----------
   Future<List<Map<String, dynamic>>> getProducts() async {
-    final snapshot = await productRef.get();
+    final snapshot = await productRef
+        .where("isActive", isEqualTo: true)
+        .orderBy("createdAt", descending: true)
+        .get();
 
-    if (!snapshot.exists) return [];
-
-    final Map<dynamic, dynamic> data =
-    snapshot.value as Map<dynamic, dynamic>;
-
-    return data.values
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
+    return snapshot.docs.map((doc) {
+      return {
+        "id": doc.id,
+        ...doc.data() as Map<String, dynamic>,
+      };
+    }).toList();
   }
 
   @override

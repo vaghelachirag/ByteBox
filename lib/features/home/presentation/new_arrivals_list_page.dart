@@ -1,4 +1,4 @@
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,7 +24,9 @@ class NewArrivalsPage extends StatefulWidget {
 }
 
 class _NewArrivalsPageState extends State<NewArrivalsPage> {
-  final _dbRef = FirebaseDatabase.instance.ref('new_arrivals');
+
+  final _dbRef = FirebaseFirestore.instance.collection('new_arrivals');
+
 
   String searchQuery = '';
 
@@ -138,11 +140,13 @@ class _NewArrivalsPageState extends State<NewArrivalsPage> {
             ),
           ),
           Expanded(
-            child: StreamBuilder<DatabaseEvent>(
-              stream: _dbRef.onValue,
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _dbRef
+                  .where('isActive', isEqualTo: true)
+                  .orderBy('createdAt', descending: true)
+                  .snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const _LoadingState();
                 }
 
@@ -150,24 +154,24 @@ class _NewArrivalsPageState extends State<NewArrivalsPage> {
                   return _ErrorState(error: snapshot.error.toString());
                 }
 
-                final data = snapshot.data?.snapshot.value;
-                if (data == null) return const _EmptyState();
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const _EmptyState();
+                }
 
-                final map = Map<dynamic, dynamic>.from(data as Map);
-                final allProducts = map.entries
-                    .map((e) => NewArrivalModel.fromMap(
-                  e.key,
-                  Map<dynamic, dynamic>.from(e.value),
-                ))
-                    .toList();
+                final allProducts = snapshot.data!.docs.map((doc) {
+                  return NewArrivalModel.fromMap(
+                    doc.id,
+                    doc.data() as Map<String, dynamic>,
+                  );
+                }).toList();
 
                 final products = _applyAll(allProducts);
+
                 if (products.isEmpty) return const _EmptyState();
 
                 return GridView.builder(
                   padding: EdgeInsets.all(16.w),
-                  gridDelegate:
-                  SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     crossAxisSpacing: 16.w,
                     mainAxisSpacing: 16.h,

@@ -1,34 +1,29 @@
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../model/best_deal_model.dart';
 
 final bestDealsProvider =
 StreamProvider.autoDispose<List<BestDealModel>>((ref) {
-  final dbRef = FirebaseDatabase.instance.ref().child('best_deals');
+  final query = FirebaseFirestore.instance
+      .collection('best_deals')
+      .where('isActive', isEqualTo: true)
+      .orderBy('order');
 
-  return dbRef.onValue.map((event) {
-    final data = event.snapshot.value;
-    if (data == null) return <BestDealModel>[];
-
+  return query.snapshots().map((snapshot) {
     final List<BestDealModel> items = [];
 
-    if (data is Map<dynamic, dynamic>) {
-      data.forEach((key, value) {
-        if (value is Map<dynamic, dynamic>) {
-          items.add(
-            BestDealModel.fromJson(
-              key.toString(),
-              Map<String, dynamic>.from(value),
-            ),
-          );
-        }
-      });
+    for (final doc in snapshot.docs) {
+      try {
+        items.add(
+          BestDealModel.fromJson(
+            doc.id,
+            doc.data(),
+          ),
+        );
+      } catch (e) {
+        print("Error parsing best deal ${doc.id}: $e");
+      }
     }
-
-    items
-      ..removeWhere((e) => !e.isActive)
-      ..sort((a, b) => a.order.compareTo(b.order));
 
     return items;
   });
