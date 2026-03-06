@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../model/category_model.dart';
 import '../../../widget/best_deal_slider.dart';
 import '../../../widget/new_arrival_slider.dart';
 import '../providers/home_provider.dart';
+import 'accessories_page.dart';
 import 'best_deal_list_page.dart';
 import 'new_arrivals_list_page.dart';
 import 'package:bytebox/widget/banner_widget.dart';
+import 'package:bytebox/features/ai_chat/presentation/ai_chat_page.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -254,6 +257,31 @@ class HomePage extends ConsumerWidget {
                       ],
                     ),
                     SizedBox(width: 12.w),
+                    // AI Chat Icon
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const AiChatPage()),
+                        );
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFF00B4FF).withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        padding: EdgeInsets.all(10.w),
+                        child: Icon(
+                          Icons.smart_toy_outlined,
+                          color: Colors.white,
+                          size: 22.sp,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12.w),
                     // Notification Icon
                     Container(
                       decoration: BoxDecoration(
@@ -491,52 +519,113 @@ class HomePage extends ConsumerWidget {
   // ---------------- CATEGORY STRIP ----------------
   Widget _buildCategoryStrip() {
     final categories = [
-      _CategoryData(
-        icon: Icons.laptop_mac_rounded,
-        label: 'Laptops',
+      CategoryData(
+        image: "assets/icon/laptop.png",
+        label: "Laptops",
       ),
-      _CategoryData(
-        icon: Icons.security_rounded,
-        label: 'AMC / Service',
+      CategoryData(
+        image: "assets/icon/desktop.png",
+        label: "Desktops",
       ),
-      _CategoryData(
-        icon: Icons.computer_rounded,
-        label: 'Desktops',
+      CategoryData(
+        image: "assets/icon/mini_pc.png",
+        label: "Mini PC",
       ),
-      _CategoryData(
-        icon: Icons.desktop_windows_rounded,
-        label: 'Monitors',
+      CategoryData(
+        image: "assets/icon/tablet.png",
+        label: "Tablet",
       ),
-      _CategoryData(
-        icon: Icons.videogame_asset_rounded,
-        label: 'Gaming',
+      CategoryData(
+        image: "assets/icon/all_in_one.png",
+        label: "All in One",
       ),
-      _CategoryData(
-        icon: Icons.headphones_rounded,
-        label: 'Accessories',
-      ),
-      _CategoryData(
-        icon: Icons.desktop_windows_rounded,
-        label: 'Computer on Rent',
+      CategoryData(
+        image: "assets/icon/accessories.png",
+        label: "Accessories",
       ),
     ];
 
-    return Container(
-      padding: EdgeInsets.only(left: 16.w, right: 16.w, top: 16.h, bottom: 8.h),
-      color: Colors.white,
-      child: SizedBox(
-        height: 80.h,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          itemCount: categories.length,
-          separatorBuilder: (_, __) => SizedBox(width: 12.w),
-          itemBuilder: (context, index) {
-            final item = categories[index];
-            return _CategoryChip(data: item);
-          },
+    return Column(
+      children: [
+        const SizedBox(height: 20),
+
+        /// Title
+        RichText(
+          text: const TextSpan(
+            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            children: [
+              TextSpan(
+                text: "Explore ",
+                style: TextStyle(color: Colors.black),
+              ),
+              TextSpan(
+                text: "Refurbished",
+                style: TextStyle(color: Colors.green),
+              ),
+              TextSpan(
+                text: " Tech",
+                style: TextStyle(color: Colors.black),
+              ),
+            ],
+          ),
         ),
-      ),
+
+        const SizedBox(height: 30),
+
+        /// Category List
+        SizedBox(
+          height: 130,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: categories.length,
+            itemBuilder: (context, index) {
+              final category = categories[index];
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: GestureDetector(
+                  onTap: () {
+                    if (category.label == 'Accessories') {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const AccessoriesPage(),
+                        ),
+                      );
+                    }
+                  },
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 90,
+                        height: 90,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey.shade100,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Image.asset(
+                            category.image,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        category.label,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -596,7 +685,20 @@ class HomePage extends ConsumerWidget {
             ),
             itemBuilder: (context, index) {
               final tile = tiles[index];
-              return _FeaturedCategoryTile(data: tile);
+              VoidCallback? onTap;
+              if (tile.title == 'Accessories') {
+                onTap = () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AccessoriesPage(),
+                    ),
+                  );
+                };
+              }
+              return _FeaturedCategoryTile(
+                data: tile,
+                onTap: onTap,
+              );
             },
           ),
         ],
@@ -753,73 +855,77 @@ class _CategoryTileData {
 
 class _FeaturedCategoryTile extends StatelessWidget {
   final _CategoryTileData data;
+  final VoidCallback? onTap;
 
-  const _FeaturedCategoryTile({required this.data});
+  const _FeaturedCategoryTile({required this.data, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            data.color.withOpacity(0.12),
-            data.color.withOpacity(0.03),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              data.color.withOpacity(0.12),
+              data.color.withOpacity(0.03),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(
+            color: data.color.withOpacity(0.35),
+            width: 1,
+          ),
+        ),
+        padding: EdgeInsets.all(10.w),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(8.w),
+              decoration: BoxDecoration(
+                color: data.color.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Icon(
+                data.icon,
+                color: Colors.white,
+                size: 18.sp,
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    data.title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.sp,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 4.h),
+                  Text(
+                    data.subtitle,
+                    style: GoogleFonts.poppins(
+                      fontSize: 9.sp,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.textSecondary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(
-          color: data.color.withOpacity(0.35),
-          width: 1,
-        ),
-      ),
-      padding: EdgeInsets.all(10.w),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(8.w),
-            decoration: BoxDecoration(
-              color: data.color.withOpacity(0.9),
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Icon(
-              data.icon,
-              color: Colors.white,
-              size: 18.sp,
-            ),
-          ),
-          SizedBox(width: 10.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  data.title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11.sp,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  data.subtitle,
-                  style: GoogleFonts.poppins(
-                    fontSize: 9.sp,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.textSecondary,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

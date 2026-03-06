@@ -1,3 +1,4 @@
+import 'package:bytebox/features/home/admin/tab/add_accessories.dart';
 import 'package:bytebox/features/home/admin/tab/add_banner.dart';
 import 'package:bytebox/features/home/admin/tab/add_best_deal.dart';
 import 'package:bytebox/features/home/admin/tab/add_product.dart';
@@ -10,7 +11,7 @@ class AdminHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 4,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Admin Dashboard'),
@@ -19,6 +20,7 @@ class AdminHomePage extends StatelessWidget {
               Tab(text: 'Banner'),
               Tab(text: 'New Arrivals'),
               Tab(text: 'Best Deals'),
+              Tab(text: 'Accessories'),
             ],
           ),
         ),
@@ -26,7 +28,8 @@ class AdminHomePage extends StatelessWidget {
           children: [
             AddBannerScreen(),
             AddProductScreen(),
-            AddBestDealScreen()
+            AddBestDealScreen(),
+            AddAccessoriesScreen(),
           ],
         ),
       ),
