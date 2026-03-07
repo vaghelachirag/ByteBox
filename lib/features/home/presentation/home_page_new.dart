@@ -1,3 +1,4 @@
+import 'package:bytebox/features/home/presentation/desktop_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,6 +11,7 @@ import '../providers/home_provider.dart';
 import 'accessories_page.dart';
 import 'best_deal_list_page.dart';
 import 'new_arrivals_list_page.dart';
+import 'all_in_one_list_page.dart';
 import 'package:bytebox/widget/banner_widget.dart';
 import 'package:bytebox/features/ai_chat/presentation/ai_chat_page.dart';
 
@@ -552,6 +554,19 @@ class HomePage extends ConsumerWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const AccessoriesPage(),
+                        ),
+                      );
+                    } else if (category.label == 'All in One') {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const AllInOneListPage(),
+                        ),
+                      );
+                    }
+                    else if (category.label == 'Desktops') {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const DesktopListPage(),
                         ),
                       );
                     }
