@@ -281,24 +281,7 @@ class HomePage extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    SizedBox(width: 12.w),
-                    // Notification Icon
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFF00B4FF).withOpacity(0.3),
-                          width: 1,
-                        ),
-                      ),
-                      padding: EdgeInsets.all(10.w),
-                      child: Icon(
-                        Icons.notifications_outlined,
-                        color: Colors.white,
-                        size: 22.sp,
-                      ),
-                    ),
+
                   ],
                 ),
                 SizedBox(height: 16.h)
@@ -516,44 +499,25 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  // ---------------- CATEGORY STRIP ----------------
   Widget _buildCategoryStrip() {
     final categories = [
-      CategoryData(
-        image: "assets/icon/laptop.png",
-        label: "Laptops",
-      ),
-      CategoryData(
-        image: "assets/icon/desktop.png",
-        label: "Desktops",
-      ),
-      CategoryData(
-        image: "assets/icon/mini_pc.png",
-        label: "Mini PC",
-      ),
-      CategoryData(
-        image: "assets/icon/tablet.png",
-        label: "Tablet",
-      ),
-      CategoryData(
-        image: "assets/icon/all_in_one.png",
-        label: "All in One",
-      ),
-      CategoryData(
-        image: "assets/icon/accessories.png",
-        label: "Accessories",
-      ),
+      CategoryData(image: "assets/icon/laptop.png", label: "Laptops"),
+      CategoryData(image: "assets/icon/desktop.png", label: "Desktops"),
+      CategoryData(image: "assets/icon/mini_pc.png", label: "Mini PC"),
+      CategoryData(image: "assets/icon/tablet.png", label: "Tablet"),
+      CategoryData(image: "assets/icon/all_in_one.png", label: "All in One"),
+      CategoryData(image: "assets/icon/accessories.png", label: "Accessories"),
     ];
 
     return Column(
       children: [
-        const SizedBox(height: 20),
+        SizedBox(height: 20.h),
 
         /// Title
         RichText(
-          text: const TextSpan(
-            style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-            children: [
+          text: TextSpan(
+            style: TextStyle(fontSize: 26.sp, fontWeight: FontWeight.bold),
+            children: const [
               TextSpan(
                 text: "Explore ",
                 style: TextStyle(color: Colors.black),
@@ -570,11 +534,10 @@ class HomePage extends ConsumerWidget {
           ),
         ),
 
-        const SizedBox(height: 30),
+        SizedBox(height: 30.h),
 
-        /// Category List
         SizedBox(
-          height: 130,
+          height: 130.h,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: categories.length,
@@ -582,7 +545,7 @@ class HomePage extends ConsumerWidget {
               final category = categories[index];
 
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(horizontal: 16.w),
                 child: GestureDetector(
                   onTap: () {
                     if (category.label == 'Accessories') {
@@ -596,25 +559,27 @@ class HomePage extends ConsumerWidget {
                   child: Column(
                     children: [
                       Container(
-                        width: 90,
-                        height: 90,
+                        width: 90.w,
+                        height: 90.w,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.grey.shade100,
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: EdgeInsets.all(16.w),
                           child: Image.asset(
                             category.image,
                             fit: BoxFit.contain,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 10),
+
+                      SizedBox(height: 10.h),
+
                       Text(
                         category.label,
-                        style: const TextStyle(
-                          fontSize: 14,
+                        style: TextStyle(
+                          fontSize: 14.sp,
                           fontWeight: FontWeight.w500,
                         ),
                       )

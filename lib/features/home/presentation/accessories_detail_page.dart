@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -5,21 +6,13 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 
 class AccessoriesDetailPage extends StatelessWidget {
-  final String brand;
-  final String name;
-  final String color;
-  final double price;
-  final double? mrp;
-  final String emiText;
+  final String accessoryId;
+  final String? initialTitle;
 
   const AccessoriesDetailPage({
     super.key,
-    required this.brand,
-    required this.name,
-    required this.color,
-    required this.price,
-    this.mrp,
-    required this.emiText,
+    required this.accessoryId,
+    this.initialTitle,
   });
 
   @override
@@ -27,134 +20,174 @@ class AccessoriesDetailPage extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final isWide = size.width >= 800;
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0.5,
-        iconTheme: const IconThemeData(color: Colors.black),
-        title: Text(
-          name,
-          style: GoogleFonts.poppins(
-            fontSize: 14.sp,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
-          child: isWide
-              ? Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(flex: 5, child: _buildGallerySection(context)),
-                    SizedBox(width: 24.w),
-                    Expanded(flex: 6, child: _buildDetailSection(context)),
-                  ],
-                )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildGallerySection(context),
-                    SizedBox(height: 16.h),
-                    _buildDetailSection(context),
-                  ],
-                ),
-        ),
-      ),
-    );
-  }
+    final docStream = FirebaseFirestore.instance
+        .collection('accessories')
+        .doc(accessoryId)
+        .snapshots();
 
-  Widget _buildGallerySection(BuildContext context) {
-    return Column(
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-            decoration: BoxDecoration(
-              color: Colors.red.shade50,
-              borderRadius: BorderRadius.circular(20.r),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 8.w,
-                  height: 8.w,
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: docStream,
+      builder: (context, snapshot) {
+        final data = snapshot.data?.data();
+
+        final brand = _toString(data?['brand']);
+        final name = _toString(data?['name']);
+        final color = _toString(data?['color']);
+        final price = _toDouble(data?['price']);
+        final mrp = _toNullableDouble(data?['mrp']);
+        final emiText = _toString(data?['emiText']);
+        final images = _toStringList(data?['images']);
+
+        final titleText = name.isNotEmpty
+            ? name
+            : (initialTitle?.trim().isNotEmpty ?? false)
+                ? initialTitle!.trim()
+                : 'Accessory';
+
+        if (snapshot.hasError) {
+          return Scaffold(
+            backgroundColor: AppColors.backgroundLight,
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              elevation: 0.5,
+              iconTheme: const IconThemeData(color: Colors.black),
+              title: Text(
+                titleText,
+                style: GoogleFonts.poppins(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
                 ),
-                SizedBox(width: 6.w),
-                Text(
-                  'Live Store',
-                  style: GoogleFonts.poppins(
-                    fontSize: 10.sp,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.red,
-                  ),
+              ),
+            ),
+            body: Center(
+              child: Text(
+                'Error loading accessory',
+                style: GoogleFonts.poppins(color: Colors.red),
+              ),
+            ),
+          );
+        }
+
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            backgroundColor: AppColors.backgroundLight,
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              elevation: 0.5,
+              iconTheme: const IconThemeData(color: Colors.black),
+              title: Text(
+                titleText,
+                style: GoogleFonts.poppins(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-        SizedBox(height: 12.h),
-        AspectRatio(
-          aspectRatio: 4 / 3,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(16.r),
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (!snapshot.hasData || data == null) {
+          return Scaffold(
+            backgroundColor: AppColors.backgroundLight,
+            appBar: AppBar(
+              backgroundColor: Colors.white,
+              elevation: 0.5,
+              iconTheme: const IconThemeData(color: Colors.black),
+              title: Text(
+                titleText,
+                style: GoogleFonts.poppins(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
             ),
-            child: Center(
-              child: Icon(
-                Icons.speaker,
-                size: 80.sp,
-                color: AppColors.primary,
+            body: Center(
+              child: Text(
+                'Accessory not found',
+                style: GoogleFonts.poppins(color: AppColors.textSecondary),
+              ),
+            ),
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: AppColors.backgroundLight,
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            elevation: 0.5,
+            iconTheme: const IconThemeData(color: Colors.black),
+            title: Text(
+              titleText,
+              style: GoogleFonts.poppins(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
               ),
             ),
           ),
-        ),
-        SizedBox(height: 12.h),
-        SizedBox(
-          height: 70.h,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: 4,
-            separatorBuilder: (_, __) => SizedBox(width: 8.w),
-            itemBuilder: (context, index) {
-              return Container(
-                width: 70.h,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(
-                    color: index == 0
-                        ? AppColors.primary
-                        : Colors.grey.shade300,
-                  ),
-                  color: Colors.white,
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.speaker,
-                    size: 32.sp,
-                    color: AppColors.primary,
-                  ),
-                ),
-              );
-            },
+          body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+              child: isWide
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: _AccessoryGallery(images: images),
+                        ),
+                        SizedBox(width: 24.w),
+                        Expanded(
+                          flex: 6,
+                          child: _buildDetailSection(
+                            context,
+                            brand: brand,
+                            name: name,
+                            color: color,
+                            price: price,
+                            mrp: mrp,
+                            emiText: emiText,
+                          ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _AccessoryGallery(images: images),
+                        SizedBox(height: 16.h),
+                        _buildDetailSection(
+                          context,
+                          brand: brand,
+                          name: name,
+                          color: color,
+                          price: price,
+                          mrp: mrp,
+                          emiText: emiText,
+                        ),
+                      ],
+                    ),
+            ),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
-  Widget _buildDetailSection(BuildContext context) {
+  Widget _buildDetailSection(
+    BuildContext context, {
+    required String brand,
+    required String name,
+    required String color,
+    required double price,
+    required double? mrp,
+    required String emiText,
+  }) {
     int quantity = 1;
 
     return StatefulBuilder(
@@ -439,6 +472,299 @@ class AccessoriesDetailPage extends StatelessWidget {
       child: CircleAvatar(
         radius: 10.w,
         backgroundColor: color,
+      ),
+    );
+  }
+}
+
+class _AccessoryGallery extends StatefulWidget {
+  final List<String> images;
+
+  const _AccessoryGallery({required this.images});
+
+  @override
+  State<_AccessoryGallery> createState() => _AccessoryGalleryState();
+}
+
+class _AccessoryGalleryState extends State<_AccessoryGallery> {
+  int selected = 0;
+
+  void _openFullscreenViewer() {
+    final images = widget.images;
+    if (images.isEmpty) return;
+
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black,
+        pageBuilder: (_, __, ___) => _FullscreenImageViewer(
+          images: images,
+          initialIndex: selected.clamp(0, images.length - 1),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final images = widget.images;
+
+    final hasImages = images.isNotEmpty;
+    final mainUrl = hasImages ? images[selected.clamp(0, images.length - 1)] : '';
+
+    return Column(
+      children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(20.r),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8.w,
+                  height: 8.w,
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                SizedBox(width: 6.w),
+                Text(
+                  'Live Store',
+                  style: GoogleFonts.poppins(
+                    fontSize: 10.sp,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.red,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: 12.h),
+        AspectRatio(
+          aspectRatio: 4 / 3,
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(16.r),
+            ),
+            child: hasImages
+                ? Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _openFullscreenViewer,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.network(mainUrl, fit: BoxFit.cover),
+                          Positioned(
+                            right: 10.w,
+                            bottom: 10.h,
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 10.w,
+                                vertical: 6.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(0.55),
+                                borderRadius: BorderRadius.circular(20.r),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.zoom_out_map_rounded,
+                                    size: 14.sp,
+                                    color: Colors.white,
+                                  ),
+                                  SizedBox(width: 6.w),
+                                  Text(
+                                    'View',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 11.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : Center(
+                    child: Icon(
+                      Icons.speaker,
+                      size: 80.sp,
+                      color: AppColors.primary,
+                    ),
+                  ),
+          ),
+        ),
+        if (images.length > 1) ...[
+          SizedBox(height: 12.h),
+          SizedBox(
+            height: 70.h,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: images.length,
+              separatorBuilder: (_, __) => SizedBox(width: 8.w),
+              itemBuilder: (context, index) {
+                final isSelected = index == selected;
+                return InkWell(
+                  borderRadius: BorderRadius.circular(12.r),
+                  onTap: () => setState(() => selected = index),
+                  child: Container(
+                    width: 70.h,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.primary
+                            : Colors.grey.shade300,
+                      ),
+                      color: Colors.white,
+                    ),
+                    child: Image.network(images[index], fit: BoxFit.cover),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+double _toDouble(Object? v) {
+  if (v is num) return v.toDouble();
+  if (v is String) return double.tryParse(v) ?? 0;
+  return 0;
+}
+
+double? _toNullableDouble(Object? v) {
+  if (v == null) return null;
+  if (v is num) return v.toDouble();
+  if (v is String) return double.tryParse(v);
+  return null;
+}
+
+List<String> _toStringList(Object? v) {
+  if (v is List) {
+    return v.whereType<String>().toList();
+  }
+  return const [];
+}
+
+String _toString(Object? v) {
+  if (v == null) return '';
+  if (v is String) return v;
+  return v.toString();
+}
+
+class _FullscreenImageViewer extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
+
+  const _FullscreenImageViewer({
+    required this.images,
+    required this.initialIndex,
+  });
+
+  @override
+  State<_FullscreenImageViewer> createState() => _FullscreenImageViewerState();
+}
+
+class _FullscreenImageViewerState extends State<_FullscreenImageViewer> {
+  late final PageController _controller;
+  late int _index;
+
+  @override
+  void initState() {
+    super.initState();
+    _index = widget.initialIndex.clamp(0, widget.images.length - 1);
+    _controller = PageController(initialPage: _index);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final images = widget.images;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _controller,
+              itemCount: images.length,
+              onPageChanged: (i) => setState(() => _index = i),
+              itemBuilder: (context, index) {
+                return Center(
+                  child: InteractiveViewer(
+                    minScale: 1,
+                    maxScale: 4,
+                    panEnabled: true,
+                    scaleEnabled: true,
+                    child: Image.network(
+                      images[index],
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                );
+              },
+            ),
+            Positioned(
+              top: 10.h,
+              left: 10.w,
+              right: 10.w,
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 6.h,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20.r),
+                    ),
+                    child: Text(
+                      '${_index + 1}/${images.length}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
